@@ -10,6 +10,7 @@ import SelectIcon from '@mui/icons-material/TouchApp';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { userFormStore } from '@/store/form-store';
 import { useSession, signIn, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 type HeaderProps = {
   onPlaceSelected: (place: google.maps.places.PlaceResult) => void;
@@ -26,6 +27,7 @@ const Header: React.FC<HeaderProps> = ({ onPlaceSelected, onToggleDrawing, setDr
   const onLoadAutocomplete = (autocompleteInstance: google.maps.places.Autocomplete) => {
     setAutocomplete(autocompleteInstance);
   };
+  const router = useRouter();
   const { data: session } = useSession();
   const onPlaceChanged = () => {
     if (autocomplete !== null) {
@@ -122,6 +124,14 @@ const Header: React.FC<HeaderProps> = ({ onPlaceSelected, onToggleDrawing, setDr
       </div>
       {/* Conditional rendering for Admin/Login/Logout */}
       {session ? (
+        <>
+            <Button
+              variant="contained"
+              style={styles.adminButton}
+              onClick={() => router.push('/admin/dashboard')}
+            >
+            Dashboard
+            </Button>
           <Button
             variant="contained"
             style={styles.adminButton}
@@ -129,6 +139,7 @@ const Header: React.FC<HeaderProps> = ({ onPlaceSelected, onToggleDrawing, setDr
           >
             Logout
           </Button>
+        </>
         ) : (
           <Button
             variant="contained"

@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from 'react';
-import { MapComponent } from "@/components/map";
+import { MapComponent } from "@/app/ui/map/map";
 import { MapProvider } from "@/providers/map-provider";
-import Header from "@/components/header";
+import Header from "@/app/ui/map/header";
 import { SessionProvider } from 'next-auth/react';
 type FormOptions = {
   open: boolean;

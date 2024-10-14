@@ -3,6 +3,7 @@
 
 // Import necessary modules and functions from external libraries and our own project
 import { Libraries, useJsApiLoader } from '@react-google-maps/api';
+import { Spin } from 'antd';
 import { ReactNode } from 'react';
 
 // Define a list of libraries to load from the Google Maps API
@@ -19,7 +20,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
 
   if(loadError) return <p>Encountered error while loading google maps</p>
 
-  if(!scriptLoaded) return <p>Map Script is loading ...</p>
+  if(!scriptLoaded) return <Spin size="large" />
 
   // Return the children prop wrapped by this MapProvider component
   return children;
