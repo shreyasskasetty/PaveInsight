@@ -1,0 +1,111 @@
+# Compiled Java class files
+*.class
+
+# Log files
+*.log
+logs/
+
+.idea
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files
+*.jar
+*.war
+*.ear
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+# Avoid ignoring maven wrapper jar file (.mvn/wrapper/maven-wrapper.jar)
+
+# Gradle
+.gradle/
+build/
+# Avoid ignoring Gradle wrapper jar file (.gradle/wrapper/gradle-wrapper.jar)
+
+# Gradle dependency cache
+.gradle/
+**/build/
+
+# Ignore all Gradle files
+.gradle
+build/
+!gradlew
+!gradlew.bat
+!gradle-wrapper.jar
+
+# Spring Boot specific
+*.war
+*.jar
+
+# IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+.nb-gradle/
+
+# Eclipse
+*.launch
+.metadata/
+*.tmp
+*.bak
+*.swp
+.eclipse/
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Intellij IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Ignore generated files
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+.gradle/
+build/
+logs/
+!gradlew
+!gradlew.bat
+!gradle-wrapper.jar
+
+# Lombok generated files
+.lombok/
+
+# Static analysis tool files
+/checkstyle/
+/findbugs/
+.pmd/
