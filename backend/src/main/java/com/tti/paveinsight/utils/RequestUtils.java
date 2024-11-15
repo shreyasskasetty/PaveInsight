@@ -1,13 +1,16 @@
 package com.tti.paveinsight.utils;
 
+import com.tti.paveinsight.dto.JobDto;
 import com.tti.paveinsight.dto.RequestDto;
 import com.tti.paveinsight.models.Job;
 import com.tti.paveinsight.models.Request;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class RequestUtils {
-    public RequestDto convertToDto(Request request, Job job) {
+    public RequestDto convertToDto(Request request, List<JobDto> jobs) {
         return new RequestDto(
                 request.getId(),
                 request.getUsername(),
@@ -17,10 +20,9 @@ public class RequestUtils {
                 request.getGeoJson(),
                 request.getMessage(),
                 request.getStatus(),
-                request.getJobId(),
-                job != null ? job.getStatus() : null,
-                job != null ? job.getResultData() : null,
-                job != null ? job.getSatelliteImageURL() : null
+                request.getUpdatedAt(),
+                request.getCreatedAt(),
+                jobs
         );
     }
 }

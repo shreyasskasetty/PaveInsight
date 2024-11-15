@@ -1,16 +1,20 @@
 package com.tti.paveinsight.models;
 
 import jakarta.persistence.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.Date;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 public class Job {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne
-    @JoinColumn(name = "request_id")
+    @ManyToOne
+    @JoinColumn(name = "request_id", nullable = false) // Many jobs to one request
     private Request request;
     private String status;
     @Column(columnDefinition = "json")
@@ -56,25 +60,21 @@ public class Job {
         this.satelliteImageURL = satelliteImageURL;
     }
 
-    public Date getLastUpdateDate() {
-        return lastUpdateDate;
+    public Date getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setLastUpdateDate(Date lastUpdateDate) {
-        this.lastUpdateDate = lastUpdateDate;
-    }
-
-    public Date getProcessingDate() {
-        return processingDate;
-    }
-
-    public void setProcessingDate(Date processingDate) {
-        this.processingDate = processingDate;
+    public Date getCreatedAt() {
+        return createdAt;
     }
 
     private String satelliteImageURL;
+
+    @LastModifiedDate
     @Temporal(TemporalType.TIMESTAMP)
-    private Date lastUpdateDate;
+    private Date updatedAt;
+
+    @CreatedDate
     @Temporal(TemporalType.TIMESTAMP)
-    private Date processingDate;
+    private Date createdAt;
 }
