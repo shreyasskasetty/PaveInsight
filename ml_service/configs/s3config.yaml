@@ -1,0 +1,5 @@
+s3:
+  bucket_name: "ml-inference-outputs"
+  region: "us-east-1"  # Specify your AWS region
+  folder: "uploads/"  # Folder path within the bucket (optional)
+  encryption: true  # Enable server-side encryption if required
