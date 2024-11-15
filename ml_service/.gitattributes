@@ -1,0 +1,4 @@
+data/inputs/satellite_streets.tif filter=lfs diff=lfs merge=lfs -text
+core/models/* filter=lfs diff=lfs merge=lfs -text
+core/lib/segmentation/ckpt/ade20k-resnet50dilated-ppm_deepsup/* filter=lfs diff=lfs merge=lfs -text
+core/lib/inpainting/experiments/rohanswilkho_93_2024-10-18_18-32-48_train_lama-fourier_/models/* filter=lfs diff=lfs merge=lfs -text
