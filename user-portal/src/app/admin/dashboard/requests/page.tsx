@@ -1,14 +1,18 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Button, Select, Input, Popconfirm, Form } from 'antd';
 import { DownloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import { getRequests, deleteRequest, updateRequestStatus } from '@/lib/api/request-api';
+import { notification } from 'antd';
+import { getRequestStatusString } from '@/lib/utils/requests';
 
 interface Request {
   id: string;
   userId: string;
   username: string;
   email: string;
+  geoJson: string;
   jobStatus: 'In Progress' | 'Completed' | 'Pending';
   requestStatus: 'In Progress' | 'Completed' | 'Pending';
   fileUrl: string;
@@ -20,65 +24,51 @@ const RequestsPage: React.FC = () => {
   const router = useRouter();
   const [filter, setFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [requests, setRequests] = useState<Request[]>([
-    {
-      id: '1',
-      userId: 'U001',
-      username: 'john_doe',
-      email: 'john.doe@example.com',
-      jobStatus: 'In Progress',
-      requestStatus: 'In Progress',
-      fileUrl: 'https://example.com/files/john_doe_request1.kml',
-    },
-    {
-      id: '2',
-      userId: 'U002',
-      username: 'jane_smith',
-      email: 'jane.smith@example.com',
-      jobStatus: 'Completed',
-      requestStatus: 'Completed',
-      fileUrl: 'https://example.com/files/jane_smith_request1.geojson',
-    },
-    {
-      id: '3',
-      userId: 'U003',
-      username: 'bob_johnson',
-      email: 'bob.johnson@example.com',
-      jobStatus: 'Pending',
-      requestStatus: 'Pending',
-      fileUrl: 'https://example.com/files/bob_johnson_request1.kml',
-    },
-    {
-      id: '4',
-      userId: 'U004',
-      username: 'alice_williams',
-      email: 'alice.williams@example.com',
-      jobStatus: 'In Progress',
-      requestStatus: 'In Progress',
-      fileUrl: 'https://example.com/files/alice_williams_request1.geojson',
-    },
-    {
-      id: '5',
-      userId: 'U005',
-      username: 'charlie_brown',
-      email: 'charlie.brown@example.com',
-      jobStatus: 'Completed',
-      requestStatus: 'Completed',
-      fileUrl: 'https://example.com/files/charlie_brown_request1.kml',
-    },
-  ]);
-
+  const [requests, setRequests] = useState<Request[]>([]);
   const [form] = Form.useForm();
 
-  const handleDelete = (id: string) => {
-    setRequests(requests.filter(request => request.id !== id));
+  const fetchRequests = async () => {
+    try {
+      const data = await getRequests();
+      console.log(data);
+      setRequests(data);
+    } catch (error) {
+      console.error('Failed to fetch requests:', error);
+    }
   };
 
-  const handleStatusChange = (value: string, record: Request) => {
-    const updatedRequests = requests.map(req =>
-      req.id === record.id ? { ...req, requestStatus: value as Request['requestStatus'] } : req
-    );
-    setRequests(updatedRequests);
+  useEffect(() => {
+    fetchRequests(); // Call fetchRequests when the component mounts
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteRequest(id); // Wait for the delete request to complete
+      fetchRequests(); // Re-fetch the requests from the backend
+    } catch (error) {
+      console.error('Failed to delete request:', error);
+      notification.error({
+        message: 'Delete Failed',
+        description: 'There was an error deleting the request.',
+      });
+    }
+  };
+
+  const handleStatusChange = async (value: string, record: Request) => {
+    try {
+      await updateRequestStatus(record.id, value.toUpperCase()); // Make an API call to update the status
+      fetchRequests();
+      const updatedRequests = requests.map(req =>
+        req.id === record.id ? { ...req, requestStatus: value as Request['requestStatus'] } : req
+      );
+      setRequests(updatedRequests);
+    } catch (error) {
+      console.error('Failed to update request status:', error);
+      notification.error({
+        message: 'Update Failed',
+        description: 'There was an error updating the request status.',
+      });
+    }
   };
 
   const handleRowClick = (record: Request) => {
@@ -88,8 +78,8 @@ const RequestsPage: React.FC = () => {
   const columns = [
     {
       title: 'User ID',
-      dataIndex: 'userId',
-      key: 'userId',
+      dataIndex: 'id',
+      key: 'id',
     },
     {
       title: 'Username',
@@ -103,19 +93,18 @@ const RequestsPage: React.FC = () => {
     },
     {
       title: 'Process Status',
-      dataIndex: 'jobStatus',
-      key: 'jobStatus',
-    },
-    {
-      title: 'Analysis Status',
-      dataIndex: 'requestStatus',
-      key: 'requestStatus',
-      render: (text: string, record: Request) => (
+      dataIndex: 'status',
+      key: 'status',
+      render: (text: string, record: Request) => {
+        const displayStatus = text === 'PENDING' ? 'Pending' : 
+        text === 'IN PROGRESS' ? 'In Progress' : 
+        text === 'COMPLETED' ? 'Completed' : text; // Convert status to user-friendly format
+        return (
         <Form.Item
           name={['requestStatus', record.id]}
-          initialValue={text}
+          initialValue={displayStatus}
           style={{ margin: 0 }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e: any) => e.stopPropagation()}
         >
           <Select
             style={{ width: 120 }}
@@ -127,16 +116,25 @@ const RequestsPage: React.FC = () => {
             <Option value="Pending">Pending</Option>
           </Select>
         </Form.Item>
-      ),
+      )
+    },
+    },
+    {
+      title: 'Analysis Status',
+      dataIndex: 'jobStatus',
+      key: 'jobStatus',
+      render: (text: string) => text || 'Not Submitted',
     },
     {
       title: 'Download',
       key: 'download',
       render: (text: string, record: Request) => (
-        <Button
-          icon={<DownloadOutlined />}
-          onClick={() => handleDownload(record.fileUrl)}
-        />
+        <span onClick={(e) => e.stopPropagation()}>
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={() => handleDownload(record)}
+          />
+        </span>
       ),
     },
     {
@@ -157,14 +155,42 @@ const RequestsPage: React.FC = () => {
     },
   ];
 
-  const handleDownload = (fileUrl: string) => {
-    // Implement download logic here
-    console.log(`Downloading file from ${fileUrl}`);
+  const handleDownload = async (record: Request) => {
+    const geoJsonData = record?.geoJson; // Assuming fileUrl contains the GeoJSON string
+
+    // notification.info({
+    //   message: 'Download Started',
+    //   description: 'Your GeoJSON file is being downloaded.',
+    // });
+
+    try {
+      // Create a Blob from the GeoJSON string
+      const blob = new Blob([geoJsonData], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'data.geojson';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      // notification.success({
+      //   message: 'Download Complete',
+      //   description: 'Your GeoJSON file has been downloaded successfully.',
+      // });
+    } catch (error) {
+      notification.error({
+        message: 'Download Failed',
+        description: 'There was an error downloading your file.',
+      });
+      console.error('Download error:', error);
+    }
   };
 
-  const filteredRequests = requests.filter((request) => {
+  const filteredRequests = requests.filter((request: any) => {
     const matchesFilter =
-      filter === 'All' || request.requestStatus === filter;
+      filter === 'All' || getRequestStatusString(request.status) === filter;
     const matchesSearch =
       request.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.email.toLowerCase().includes(searchTerm.toLowerCase());

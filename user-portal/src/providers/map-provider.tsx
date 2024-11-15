@@ -14,7 +14,7 @@ export function MapProvider({ children }: { children: ReactNode }) {
 
   // Load the Google Maps JavaScript API asynchronously
   const { isLoaded: scriptLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: 'AIzaSyCBsfVbFAnHvwXptnBmNbuvq9Dh9mcbMQA',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string,
     libraries: libraries as Libraries,
   });
 

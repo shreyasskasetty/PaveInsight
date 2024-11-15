@@ -1,16 +1,28 @@
 'use client'
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Spin, Typography, Button, Steps, Card, Row, Col, Space, Divider, Upload, message, Image } from 'antd';
+import { Spin, Typography, Button, Steps, Card, Row, Col, Space, Divider, Upload, message, Image, notification } from 'antd';
 import { DownloadOutlined, UploadOutlined } from '@ant-design/icons';
-
+import { getRequestDetails } from '@/lib/api/request-api';
+import { submitJob } from '@/lib/api/submit-job-api';
+import ReactJson from 'react-json-pretty'; // Import the alternative JSON viewer
 const { Title, Text } = Typography;
-
+import { getRequestStatusString } from '@/lib/utils/requests';
 interface RequestDetails extends Request {
-  createdAt: string;
-  updatedAt: string;
-  stages: { name: string; status: 'wait' | 'process' | 'finish' | 'error' }[];
-  fileContent: string;
+  id: string;
+  requestCreatedAt: string;
+  requestUpdatedAt: string;
+  jobUpdatedAt: string;
+  jobCreatedAt: string;
+  username: string;
+  email: string;
+  geoJson: string;
+  message: string;
+  companyName: string;
+  phoneNumber: string;
+  jobStatus: string;
+  status: string;
+  jobId: string;
 }
 
 const RequestDetailsPage: React.FC = () => {
@@ -20,36 +32,24 @@ const RequestDetailsPage: React.FC = () => {
   const [satelliteImage, setSatelliteImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [fileList, setFileList] = useState<any[]>([]);
-
+  const [resultImageUrl, setResultImageUrl] = useState<string | null>(null);
+  const stages = [
+    { name: 'Stage 1', status: 'finish' },
+    { name: 'Stage 2', status: 'process' },
+    { name: 'Stage 3', status: 'wait' },
+    { name: 'Stage 4', status: 'wait' }
+  ];
   useEffect(() => {
-    // TODO: Replace this with actual API call
     const fetchRequestDetails = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const dummyData: RequestDetails = {
-        id: id as string,
-        userId: 'user123',
-        username: 'johndoe',
-        email: 'johndoe@example.com',
-        jobStatus: 'In Progress',
-        requestStatus: 'Approved',
-        fileUrl: 'https://example.com/file.pdf',
-        createdAt: '2023-04-15T10:30:00Z',
-        updatedAt: '2023-04-15T11:45:00Z',
-        stages: [
-          { name: 'Submitted', status: 'finish' },
-          { name: 'Processing', status: 'process' },
-          { name: 'Completed', status: 'wait' },
-        ],
-        fileContent: 'This is a placeholder for the file content...',
-      };
-
-      setRequest(dummyData);
+      const requestInfo = await getRequestDetails(id as string);
+      console.log(requestInfo.status)
+      setRequest(requestInfo);
       setLoading(false);
     };
 
     fetchRequestDetails();
   }, [id]);
+
 
   const handleImageUpload = (info: any) => {
     const { status, originFileObj } = info.file;
@@ -73,16 +73,52 @@ const RequestDetailsPage: React.FC = () => {
   };
 
   const handleSubmitToML = async () => {
-    if (!satelliteImage) {
-      message.error('Please upload a satellite image before processing the job.');
-      return;
+    // if (!satelliteImage) {
+    //   message.error('Please upload a satellite image before processing the job.');
+    //   return;
+    // }
+    // // TODO: Implement ML pipeline submission with the uploaded image
+    // console.log('Submitting to ML pipeline with image:', satelliteImage);
+    const result = await submitJob(id as string);
+    if (result.status === 200) {
+      notification.success({
+        message: 'Job Submission',
+        description: 'Job submitted successfully!',
+      });
+    } else {
+      notification.error({
+        message: 'Job Submission Failed',
+        description: result.message || 'Job submission failed. Please try again.',
+      });
     }
-    // TODO: Implement ML pipeline submission with the uploaded image
-    console.log('Submitting to ML pipeline with image:', satelliteImage);
   };
 
   const handleDownload = () => {
-    // TODO: Implement file download
+    //Note: This is duplicate code as line number 146 in requests page put this in utils and remove redundancy later
+    try {
+      // Create a Blob from the GeoJSON string
+      if (request?.geoJson == null){
+        notification.error({
+          message: 'Download Failed',
+          description: 'GeoJSON content not present in the request',
+        });
+      }
+      const blob = new Blob([request?.geoJson!], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'data.geojson';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      notification.error({
+        message: 'Download Failed',
+        description: 'There was an error downloading your file.',
+      });
+      console.error('Download error:', error);
+    }
     console.log('Downloading file...');
   };
 
@@ -110,7 +146,7 @@ const RequestDetailsPage: React.FC = () => {
               <Title level={4}>{request.username}</Title>
               <Text type="secondary">{request.email}</Text>
               <br />
-              <Text type="secondary">User ID: {request.userId}</Text>
+              <Text type="secondary">User ID: {request.id}</Text>
             </Col>
           </Row>
           <Divider />
@@ -119,31 +155,42 @@ const RequestDetailsPage: React.FC = () => {
               <Text strong>Request ID:</Text> {request.id}
             </Col>
             <Col span={12}>
-              <Text strong>Process Status:</Text> {request.jobStatus}
+              <Text strong>Analysis Status:</Text> {request.jobStatus? request.jobStatus:"Pending Job Submission"}
             </Col>
             <Col span={12}>
-              <Text strong>Analysis Status:</Text> {request.requestStatus}
+              <Text strong>Process Status:</Text> {getRequestStatusString(request.status)}
             </Col>
             <Col span={12}>
-              <Text strong>Created:</Text> {new Date(request.createdAt).toLocaleString()}
+              <Text strong>Created:</Text> {new Date(request.requestCreatedAt).toLocaleString()}
             </Col>
             <Col span={12}>
-              <Text strong>Last Updated:</Text> {new Date(request.updatedAt).toLocaleString()}
+              <Text strong>Last Updated:</Text> {new Date(request.requestUpdatedAt).toLocaleString()}
+            </Col>
+            <Col span={12}>
+              <Text strong>Company Name:</Text> {request.companyName}
+            </Col>
+            <Col span={12}>
+              <Text strong>Phone Number:</Text> {request.phoneNumber}
+            </Col>
+            <Col span={12}>
+              <Text strong>Message:</Text> {request.message || "N/A"}
             </Col>
           </Row>
         </Card>
 
         <Card title="ML Pipeline Stages">
           <Steps
-            items={request.stages.map(stage => ({
+            items={stages.map(stage => ({
               title: stage.name,
               status: stage.status,
-            }))}
+            })) as Array<{ title: string; status: 'wait' | 'process' | 'finish' }>}
           />
         </Card>
 
         <Card title="File Content">
-          <pre>{request.fileContent}</pre>
+          <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+            <ReactJson data={JSON.parse(request.geoJson)} theme="monokai" />
+          </div>
           <Button icon={<DownloadOutlined />} onClick={handleDownload}>
             Download File
           </Button>
@@ -180,7 +227,7 @@ const RequestDetailsPage: React.FC = () => {
         <Button 
           type="primary" 
           onClick={handleSubmitToML} 
-          disabled={!satelliteImage}
+          // disabled={!satelliteImage}
         >
           Submit Job
         </Button>
