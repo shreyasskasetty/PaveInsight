@@ -1,0 +1,11 @@
+dataset:
+  img_suffix: .png
+  kind: default
+  pad_out_to_modulo: 8
+indir: data/resized_and_masked_images
+model:
+  checkpoint: last.ckpt
+  path: /Users/shreyasskasetty/Documents/Texas A&M University Documents/Partime Job/TTI
+    - TAMU Transportation Institute/projects/PaveVision/ml_service/core/lib/inpainting/experiments/rohanswilkho_93_2024-10-18_18-32-48_train_lama-fourier_
+out_key: predicted_image
+outdir: data/inpainted_images
