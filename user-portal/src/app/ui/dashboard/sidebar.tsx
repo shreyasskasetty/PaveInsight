@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { FiHome, FiMap, FiCheckSquare, FiBell, FiSettings } from 'react-icons/fi';
+import { FiHome, FiMap, FiCheckSquare, FiBell, FiSettings, FiFileText} from 'react-icons/fi';
 
 interface SidebarOption {
   href: string;
@@ -18,6 +18,7 @@ const defaultOptions: SidebarOption[] = [
   { href: '/admin/dashboard/requests', icon: FiCheckSquare, label: 'Requests' },
   { href: '/admin/dashboard/notifications', icon: FiBell, label: 'Notifications' },
   { href: '/admin/dashboard/settings', icon: FiSettings, label: 'Settings' },
+  { href: '/results', icon:FiFileText, label: 'Results'}
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ options = defaultOptions }) => {

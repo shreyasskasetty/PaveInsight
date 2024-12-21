@@ -11,7 +11,15 @@ interface SubmitFormData {
     message: string;
   }
   
-
+export const fetchResultData = async (id: string| string[]) =>{
+    console.log('fetching results')
+    try{
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_REQUESTS_API_URL}/${id}/job-result`);
+        return response.data;
+    } catch(error: any) {
+        throw error.response?.data || error.message;
+    }
+}
   
 // Update the function to use the defined interface
 export const getRequests = async () => {
@@ -42,6 +50,18 @@ export const deleteRequest = async(id: string) => {
         throw error.response?.data || error.message;
     }
 }
+
+// Function to send an email with the results
+export const sendResultsEmail = async (requestId: string, link: string) => {
+  try {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_REQUESTS_API_URL}/${requestId}/send-email`, {link});
+    return response.data;
+  } catch (error: any) {
+    console.error('Error sending email:', error);
+    throw error.response?.data || error.message;
+  }
+};
+
 
 export const getRequestDetails = async(id: string) => {
     try {
