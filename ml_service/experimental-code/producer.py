@@ -45,7 +45,8 @@ message = {
                 ]
             ]
         }
-    }
+    },
+    "id": "57",
 }
 cor_id = str(uuid.uuid4())
 message_body = json.dumps(message)

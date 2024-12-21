@@ -1,6 +1,7 @@
 pika
 mysql-connector-python
 python-dotenv
+threading
 geopandas
 rasterio
 requests
@@ -34,3 +35,4 @@ uvicorn
 fastapi
 setproctitle
 boto3
+gdal

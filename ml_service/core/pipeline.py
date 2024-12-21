@@ -3,6 +3,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))  # Add the app to sys path
 from core.data_preparation import process_clip_points, process_satellite_image, save_street_view_images
 from core.image_processing_segmentation import process_images
+from osgeo import ogr
 from core.pci_prediction_visualization import predict_and_save_image
 import json
 import warnings
@@ -34,6 +35,18 @@ def clean_up():
         else:
             print(f"Folder not found: {folder}")
 
+def convert_shapefile_to_geojson(shapefile_path: str, geojson_path: str):
+    driver = ogr.GetDriverByName("ESRI Shapefile")
+    data_source = driver.Open(shapefile_path, 0)  # 0 means read-only
+
+    # Convert to GeoJSON
+    geojson_driver = ogr.GetDriverByName("GeoJSON")
+    if geojson_driver is None:
+        print("GeoJSON driver is not available.")
+    else:
+        geojson_data = geojson_driver.CopyDataSource(data_source, geojson_path)
+        print(f"Conversion successful. Output saved at {geojson_path}")
+        
 def run_pipeline(geojson_string, jobId: str):
     try:
         clean_up()
@@ -42,7 +55,7 @@ def run_pipeline(geojson_string, jobId: str):
     ## Run data preprocessing and download street view images
     print("Clipping points...")
     points_gdf = process_clip_points(polyline_path="data/inputs/college_station_streets.shp", geojson=geojson_string)
-
+    
     print("Process Satellite Image...")
     process_satellite_image(tif_path="data/inputs/satellite_streets.tif", points_gdf=points_gdf, output_path="data/outputs/background_satellite_streets.tif")
     
@@ -56,18 +69,19 @@ def run_pipeline(geojson_string, jobId: str):
     print("Predicting pci and generating image...")
     ## Run PCI prediction and visualization
     result_image_path, pci_shape_file_path = predict_and_save_image(points_gdf=points_gdf, jobId=jobId)
-    
+    result_geojson_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__),f"../data/outputs/{jobId}_pci.geojson"))
+    convert_shapefile_to_geojson(pci_shape_file_path, result_geojson_file_path)
     try:
     # upload to s3 bucket
         config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../configs/s3config.yaml'))
         uploader = S3Uploader(config_path)
         image_url = uploader.upload_image(result_image_path)
-        shape_file_url = uploader.upload_image(pci_shape_file_path)
+        geojson_file_url = uploader.upload_image(result_geojson_file_path)
         try:
             clean_up()
         except Exception as e:
             print(f"Clean up failed: {e}")
-        return image_url, shape_file_url
+        return image_url, geojson_file_url
     except Exception as e:
         raise Exception(f"An error occurred during the pipeline execution: {e}")
     

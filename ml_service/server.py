@@ -169,17 +169,17 @@ class AsyncConsumer:
         message = {
             "correlationId": properties.correlation_id,
             "resultImageURL": None,
-            "resultShapefileURL": None,
+            "resultGeoJSONURL": None,
             "jobStatus": None,
             "jobId": job_data.get("id"),
             "error": None
         }
         print(message)
         try:
-            result_image_url, result_shapefile_url = await self.process_job_async(job_data, properties.correlation_id)
+            result_image_url, result_geojson_url = await self.process_job_async(job_data, properties.correlation_id)
             message["jobStatus"] = "complete"
             message["resultImageURL"] = result_image_url
-            message["resultShapefileURL"] = result_shapefile_url
+            message["resultGeoJSONURL"] = result_geojson_url
         except Exception as e:
             message["jobStatus"] = "incomplete"
             message["error"] = str(e)

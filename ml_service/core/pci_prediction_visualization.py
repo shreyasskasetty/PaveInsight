@@ -110,7 +110,7 @@ def process_images(asphalt_model: nn.Module, concrete_model: nn.Module, points_g
             matching_index = matching_row.index[0]
             surface = points_gdf.loc[matching_index, 'surface']
             pci = predict_pci(img_path, asphalt_model if surface == 0 else concrete_model) * 100
-
+            print(f"Surface={surface}")
             beg_street_name = street_name
             end_street_name = filename.split('_to_')[-1].split('_mask.png')[0]
             segment = create_lines_between_points(points_gdf, line_gdf, beg_street_name, end_street_name, idx)
@@ -119,7 +119,7 @@ def process_images(asphalt_model: nn.Module, concrete_model: nn.Module, points_g
                 names.append(f"{beg_street_name.split('_')[0]}_{beg_street_name.split('_')[1]}")
                 pcis.append(pci)
 
-    return gpd.GeoDataFrame({'StreetName': names, 'PCI': pcis}, geometry=lines, crs=points_gdf.crs)
+    return gpd.GeoDataFrame({'StreetName': names, 'PCI': pcis, 'Surface': surface}, geometry=lines, crs=points_gdf.crs)
 
 def predict(points_gdf: gpd.GeoDataFrame, jobId: str):
     line_shapefile = "data/inputs/college_station_streets.shp"
