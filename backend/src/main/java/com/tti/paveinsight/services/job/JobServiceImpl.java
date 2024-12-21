@@ -1,4 +1,4 @@
-package com.tti.paveinsight.services;
+package com.tti.paveinsight.services.job;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tti.paveinsight.dto.JobDto;
@@ -9,12 +9,12 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
-public class JobService {
+public class JobServiceImpl {
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public JobService(RabbitTemplate rabbitTemplate, ObjectMapper objectMapper) {
+    public JobServiceImpl(RabbitTemplate rabbitTemplate, ObjectMapper objectMapper) {
         this.rabbitTemplate = rabbitTemplate;
         this.objectMapper = objectMapper;
     }

@@ -4,7 +4,7 @@ public class JobReplyMessage {
 
     private String correlationId;
     private String resultImageURL;
-    private String resultShapefileURL;
+    private String resultGeoJSONURL;
     private String jobStatus;
 
     private Long jobId;
@@ -29,12 +29,12 @@ public class JobReplyMessage {
         this.resultImageURL = resultImageURL;
     }
 
-    public String getResultShapefileURL() {
-        return resultShapefileURL;
+    public String getResultGeoJSONURL() {
+        return resultGeoJSONURL;
     }
 
     public void setResultShapefileURL(String resultShapefileURL) {
-        this.resultShapefileURL = resultShapefileURL;
+        this.resultGeoJSONURL = resultShapefileURL;
     }
 
     public String getJobStatus() {
@@ -64,7 +64,7 @@ public class JobReplyMessage {
         return "JobReplyMessage{" +
                 "correlationId='" + correlationId + '\'' +
                 ", resultImageURL='" + resultImageURL + '\'' +
-                ", resultShapefileURL='" + resultShapefileURL + '\'' +
+                ", resultShapefileURL='" + resultGeoJSONURL + '\'' +
                 ", jobStatus='" + jobStatus + '\'' +
                 ", error='" + error + '\'' +
                 '}';

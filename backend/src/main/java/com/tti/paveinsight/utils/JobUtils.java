@@ -14,11 +14,14 @@ public class JobUtils {
                 job.getId(),
                 job.getStatus(),
                 job.getResultData(),
+                job.getResultGeoJsonData(),
                 job.getSatelliteImageURL(),
                 job.getCreatedAt(),
                 job.getUpdatedAt(),
+                job.isResultFinalized(),
                 request.getId(),  // requestId from the associated request
                 request.getGeoJson()  // geoJson from the associated request
+
         );
     }
 }

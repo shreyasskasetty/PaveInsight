@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>PCI Dashboard</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDuRS9rqcc9dX9f-TJvvySmhc3wKeQ6xoU"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Aptos', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+        #map {
+            height: calc(100vh - 100px);
+            width: 100%;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: flex-start;
+            padding: 2em;
+        }
+        .chart {
+            width: 40%;
+            height: 25em;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 1em;
+            color: #2c3e50;
+        }
+        #legend {
+            position: absolute;
+            bottom: 5%;
+            left: 80%;
+            z-index: 1000;
+            background: white;
+            width: 10%;
+            max-width: 300px;
+            padding: 1em;
+            border: 1px solid grey;
+            border-radius: 8px;
+            font-size: 0.875em;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.3125em;
+        }
+        .legend-color {
+            width: 1.25em;
+            height: 0.625em;
+            margin-right: 0.625em;
+        }
+        .custom-info-window {
+            padding: 0.625em;
+            font-family: 'Aptos', sans-serif;
+            border-radius: 0.3125em;
+            background-color: white;
+            box-shadow: 0 0.125em 0.4375em 0.0625em rgba(0, 0, 0, 0.3);
+        }
+        .custom-info-window strong {
+            color: #2c5282;
+            font-size: 1em;
+        }
+
+         .table-container {
+             max-height: 400px; /* Adjust height as needed */
+             overflow-y: auto;
+             border: 1px solid #ccc; /* Optional: Add border for clarity */
+         }
+
+        #detailsTable {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        #detailsTable th, #detailsTable td {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        #detailsTable th {
+            background-color: #f1f1f1;
+            position: sticky;
+            top: 0; /* Keep the header fixed */
+            z-index: 1; /* Ensure header stays above the rows */
+        }
+    </style>
+</head>
+<body>
+<div class="tab">
+    <button class="tablinks" onclick="openTab(event, 'Map')">Map</button>
+    <button class="tablinks" onclick="openTab(event, 'Statistics')">Statistics</button>
+    <button class="tablinks" onclick="openTab(event, 'Details')">Details</button>
+</div>
+
+<div id="Map" class="tabcontent">
+    <div id="map"></div>
+    <div id="legend">
+        <div><strong>PCI</strong></div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: red;"></div> 0 - 40
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: orange;"></div> 40 - 55
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: yellow;"></div> 55 - 70
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: lightgreen;"></div> 70 - 85
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: darkgreen;"></div> 85 - 100
+        </div>
+    </div>
+</div>
+
+<div id="Statistics" class="tabcontent">
+    <h1>PCI Statistics Overview</h1>
+    <div class="chart-container">
+        <div id="pieChart" class="chart"></div>
+        <div id="gaugeChart" class="chart"></div>
+    </div>
+</div>
+
+<div id="Details" class="tabcontent">
+    <h1>Additional Details</h1>
+    <div class="table-container">
+        <table id="detailsTable" border="1">
+            <thead>
+            <tr>
+                <th>Street Name</th>
+                <th>PCI</th>
+                <th>Surface</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Rows will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    // Tab functionality
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+
+        // Trigger map initialization or chart redraw if needed
+        if (tabName === 'Map') {
+            initMap();
+        } else if (tabName === 'Statistics') {
+            initCharts();
+        }
+    }
+
+    // Default to first tab
+    document.getElementsByClassName('tablinks')[0].click();
+
+    // Map Initialization Function
+    function initMap() {
+        const map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: 30.621380555185965, lng: -96.34856419358502 },
+            zoom: 15,
+            mapTypeId: "roadmap",
+        });
+
+        // Add shapefile overlay using GeoJSON format
+        const shapefileData = /*[[${geoJsonData}]]*/ '{}';
+
+        // Add each feature to the map
+        map.data.addGeoJson(shapefileData);
+
+        // Style the GeoJSON overlay dynamically
+        map.data.setStyle((feature) => {
+            const pciValue = feature.getProperty("PCI");
+            let color;
+            if (pciValue < 40) color = "red";
+            else if (pciValue < 55) color = "orange";
+            else if (pciValue < 70) color = "yellow";
+            else if (pciValue < 85) color = "lightgreen";
+            else color = "darkgreen";
+
+            return {
+                strokeColor: color,
+                strokeWeight: 4,
+            };
+        });
+
+        // Add click event listener
+        map.data.addListener("click", (event) => {
+            const streetName = event.feature.getProperty("StreetName").split('_')[0].toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            const pci = Number(event.feature.getProperty("PCI")).toFixed(2);
+            const surface = event.feature.getProperty("Surface");
+
+            // Create an info window
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                        <div class="custom-info-window">
+                            <strong>Street Name:</strong> ${streetName.split('_')[0]}<br>
+                            <strong>PCI:</strong> ${pci}<br>
+                            <strong>Surface:</strong> ${surface}
+                        </div>
+                    `,
+                position: event.latLng,
+            });
+
+            // Open the info window
+            infoWindow.open(map);
+        });
+    }
+
+    // PCI Analysis Function
+    function analyzePCIData(geoJsonData) {
+        // Extract PCI values
+
+        const shapefileData = /*[[${geoJsonData}]]*/ '{}';
+
+        const pciValues = geoJsonData.features.map(feature => feature.properties.PCI);
+
+        // Calculate Average PCI
+        const averagePCI = pciValues.reduce((a, b) => a + b, 0) / pciValues.length;
+
+        // Categorize PCI
+        function categorizePCI(pci) {
+            if (pci < 40) return 'Very Poor';
+            if (pci < 55) return 'Poor';
+            if (pci < 70) return 'Fair';
+            if (pci < 85) return 'Good';
+            return 'Very Good';
+        }
+
+        // Calculate Distribution
+        const distribution = {
+            'Very Poor': 0,
+            'Poor': 0,
+            'Fair': 0,
+            'Good': 0,
+            'Very Good': 0
+        };
+
+        pciValues.forEach(pci => {
+            const category = categorizePCI(pci);
+            distribution[category]++;
+        });
+
+        // Convert to percentages
+        const totalFeatures = pciValues.length;
+        const distributionPercentages = Object.fromEntries(
+            Object.entries(distribution).map(([category, count]) =>
+                [category, ((count / totalFeatures) * 100).toFixed(2)]
+            )
+        );
+
+        return {
+            averagePCI: averagePCI.toFixed(2),
+            distribution: distributionPercentages
+        };
+    }
+
+    // Charts Initialization Function
+    function initCharts() {
+        // Perform PCI Analysis
+        const shapefileData = /*[[${geoJsonData}]]*/ {};
+
+        const pciAnalysis = analyzePCIData(shapefileData);
+
+        // Pie Chart Data
+        const distributionValues = Object.values(pciAnalysis.distribution).map(Number);
+        const distributionLabels = Object.keys(pciAnalysis.distribution);
+
+        var pieData = [{
+            values: distributionValues,
+            labels: distributionLabels,
+            type: 'pie',
+            marker: {
+                colors: ['#a93226', '#e67e22', '#f1c40f', '#27ae60', '#1e8449']
+            },
+            textinfo: 'label+percent',
+            textposition: 'outside',
+            outsidetextfont: {
+                size: 14,
+                family: 'Aptos, sans-serif'
+            },
+            automargin: true,
+            pull: 0.02,
+            hoverinfo: 'label+percent'
+        }];
+
+        var pieLayout = {
+            title: {
+                text: 'PCI Distribution',
+                font: {
+                    size: 20,
+                    family: 'Aptos, sans-serif',
+                    color: '#2c3e50'
+                },
+                x: 0.5,
+                xanchor: 'center'
+            },
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'transparent',
+            height: 25 * 16,
+            margin: {
+                t: 3.125 * 16,
+                b: 3.125 * 16,
+                l: 3.125 * 16,
+                r: 3.125 * 16
+            },
+            showlegend: true,
+            legend: {
+                orientation: 'h',
+                x: 0.5,
+                xanchor: 'center',
+                y: -0.1
+            }
+        };
+
+        // Gauge Chart
+        var gaugeData = [{
+            type: 'indicator',
+            mode: 'gauge+number',
+            value: parseFloat(pciAnalysis.averagePCI),
+            title: {
+                text: 'Average PCI',
+                font: {
+                    size: 20,
+                    family: 'Aptos, sans-serif',
+                    color: '#2c3e50'
+                },
+                xanchor: 'center'
+            },
+            gauge: {
+                axis: { range: [0, 100], tickwidth: 1, tickcolor: '#2c3e50' },
+                bar: {
+                    color: '#2980b9',
+                    thickness: 0.3,
+                    line: {
+                        color: 'black',
+                        width: 2
+                    }
+                },
+                bgcolor: '#f5f5f5',
+                borderwidth: 2,
+                bordercolor: '#bdc3c7',
+                steps: [
+                    { range: [85, 100], color: '#1e8449' },
+                    { range: [70, 85], color: '#27ae60' },
+                    { range: [55, 70], color: '#f1c40f' },
+                    { range: [40, 55], color: '#e67e22' },
+                    { range: [0, 40], color: '#a93226' }
+                ]
+            },
+            number: {
+                font: {
+                    size: 48,
+                    family: 'Aptos, sans-serif',
+                    color: '#2c3e50'
+                }
+            }
+        }];
+
+        var gaugeLayout = {
+            height: 25 * 16,
+            margin: {
+                t: 3.125 * 16,
+                b: 3.125 * 16,
+                l: 3.125 * 16,
+                r: 3.125 * 16
+            },
+            paper_bgcolor: '#f5f5f5',
+            font: {
+                family: 'Aptos, sans-serif',
+                color: '#2c3e50'
+            }
+        };
+
+        // Plot the charts
+        Plotly.newPlot('pieChart', pieData, pieLayout);
+        Plotly.newPlot('gaugeChart', gaugeData, gaugeLayout);
+
+        // Optional: Log analysis results to console
+        console.log('PCI Analysis:', pciAnalysis);
+    }
+
+    function populateDetailsTable() {
+        const shapefileData = /*[[${geoJsonData}]]*/ {};
+        const tableBody = document.getElementById('detailsTable').querySelector('tbody');
+
+        // Clear existing rows
+        tableBody.innerHTML = '';
+
+        // Add a row for each feature
+        shapefileData.features.forEach(feature => {
+            const row = document.createElement('tr');
+
+            const streetNameCell = document.createElement('td');
+            const pciCell = document.createElement('td');
+            const surfaceCell = document.createElement('td');
+
+            const streetName = feature.properties.StreetName.split('_')[0].toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            const pci = Number(feature.properties.PCI).toFixed(2);
+            const surface = feature.properties.Surface || 'N/A'; // Fallback if Surface is undefined
+
+            streetNameCell.textContent = streetName;
+            pciCell.textContent = pci;
+            surfaceCell.textContent = surface;
+
+            row.appendChild(streetNameCell);
+            row.appendChild(pciCell);
+            row.appendChild(surfaceCell);
+
+            tableBody.appendChild(row);
+        });
+    }
+
+    // Ensure the table is populated when the Details tab is opened
+    if (tabName === 'Details') {
+        populateDetailsTable();
+    }
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-package com.tti.paveinsight.services;
+package com.tti.paveinsight.services.request;
 
 import com.tti.paveinsight.dto.JobDto;
 import com.tti.paveinsight.dto.RequestDto;
@@ -6,31 +6,27 @@ import com.tti.paveinsight.models.Job;
 import com.tti.paveinsight.models.Request;
 import com.tti.paveinsight.repositories.JobRepository;
 import com.tti.paveinsight.repositories.RequestRepository;
+import com.tti.paveinsight.services.job.JobServiceImpl;
 import com.tti.paveinsight.utils.JobUtils;
 import com.tti.paveinsight.utils.RequestUtils;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-public class RequestService {
+@AllArgsConstructor
+public class RequestServiceImpl implements RequestService{
     private final RequestRepository requestRepository;
     private final JobRepository jobRepository;
-    private final JobService jobService;
+    private final JobServiceImpl jobServiceImpl;
     private final RequestUtils requestUtils;
     private final JobUtils jobUtils;
-
-    @Autowired
-    public RequestService(RequestRepository requestRepository, JobRepository jobRepository, JobService jobService, RequestUtils requestUtils, JobUtils jobUtils){
-        this.requestRepository = requestRepository;
-        this.jobRepository = jobRepository;
-        this.requestUtils = requestUtils;
-        this.jobUtils = jobUtils;
-        this.jobService = jobService;
-    }
 
     public List<RequestDto> getAllRequests() {
         return requestRepository.findAll().stream()
@@ -58,7 +54,6 @@ public class RequestService {
         return requestUtils.convertToDto(request, null);
     }
 
-
     public long getTotalRequestCount(){
         return requestRepository.count();
     }
@@ -71,7 +66,7 @@ public class RequestService {
         return requestRepository.countByStatus("COMPLETED");
     }
 
-    public RequestDto getRequestById(Long id) {
+    public RequestDto getRequestById(UUID id) {
         Request request = requestRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Request not found with id: " + id));
 
@@ -96,8 +91,7 @@ public class RequestService {
         );
     }
 
-
-    public void deleteRequestById(Long id) {
+    public void deleteRequestById(UUID id) {
         if (requestRepository.existsById(id)) {
             requestRepository.deleteById(id);
         } else {
@@ -105,7 +99,7 @@ public class RequestService {
         }
     }
 
-    public RequestDto submitJobForRequest(Long requestId) {
+    public RequestDto submitJobForRequest(UUID requestId) {
         // Retrieve the request by ID
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + requestId));
@@ -133,15 +127,17 @@ public class RequestService {
                 job.getId(),
                 job.getStatus(),
                 job.getResultData(),
+                job.getResultGeoJsonData(),
                 job.getSatelliteImageURL(),
                 job.getCreatedAt(),
                 job.getUpdatedAt(),
+                job.isResultFinalized(),
                 request.getId(),       // requestId from the associated request
                 request.getGeoJson()    // geoJson from the associated request
         );
 
         // Publish the job to RabbitMQ for processing
-        jobService.submitJobAsync(jobDto);
+        jobServiceImpl.submitJobAsync(jobDto);
 
         List<JobDto> jobDtos = request.getJobs().stream().map(j -> jobUtils.convertToDto(request, j)).toList();
 
@@ -150,7 +146,7 @@ public class RequestService {
     }
 
 
-    public RequestDto updateRequest(Long id, RequestDto requestDto){
+    public RequestDto updateRequest(UUID id, RequestDto requestDto){
         // Retrieve the existing request
         Request request = requestRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Request not found with id: " + id));
@@ -184,4 +180,108 @@ public class RequestService {
         // Convert and return the updated request as a DTO
         return requestUtils.convertToDto(request, null);
     }
+
+    public List<JobDto> getResultsJobs(UUID id){
+        Request request = requestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Request not found with id: " + id));
+
+        // Get the list of jobs associated with the request
+        List<Job> jobs = request.getJobs();
+
+        // Convert the list of jobs to a list of JobDto
+        List<JobDto> jobDtos = jobs.stream()
+                .map(job -> new JobDto(
+                        job.getId(),
+                        job.getStatus(),
+                        job.getResultData(),
+                        job.getResultGeoJsonData(),
+                        job.getSatelliteImageURL(),
+                        job.getCreatedAt(),
+                        job.getUpdatedAt(),
+                        job.isResultFinalized(),
+                        request.getId(), // Reference the request ID
+                        request.getGeoJson() // Reference the GeoJSON from the request
+                ))
+                .toList();
+        return jobDtos;
+    }
+
+    public String getJobResult(UUID requestId, Long jobId) {
+        // Check if request exists
+        Request request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new EntityNotFoundException("Request not found for ID: " + requestId));
+
+        // Verify job belongs to the request
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new EntityNotFoundException("Job not found for ID: " + jobId));
+
+        if (!job.getRequest().getId().equals(requestId)) {
+            throw new IllegalArgumentException("Job does not belong to the specified request");
+        }
+
+        System.out.println(job.getResultGeoJsonData());
+        // Return the job result data (assuming Job entity has a `resultData` field)
+        return job.getResultGeoJsonData();
+    }
+
+    @Override
+    public void finalizeJob(UUID requestId, Long jobId) {
+        Request request = requestRepository.findById(requestId).orElseThrow(() -> new EntityNotFoundException("Request not found for Id: "+ requestId));
+        Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found for ID: "+ jobId));
+        if(!job.getRequest().getId().equals(requestId)){
+            throw new IllegalArgumentException("Job does not belong to the specified request");
+        }
+        job.setResultFinalized(true);
+        jobRepository.save(job);
+    }
+
+    @Override
+    public void deleteJob(UUID requestId, Long jobId) {
+        Request request = requestRepository.findById(requestId).orElseThrow(()
+                -> new EntityNotFoundException("Request not found for Id: "+ requestId));
+        Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found for ID: "+ jobId));
+        if(!job.getRequest().getId().equals(requestId)){
+            throw new IllegalArgumentException("Job does not belong to the specified request");
+        }
+        jobRepository.delete(job);
+    }
+
+    @Override
+    public void resetFinalizedJob(UUID requestId, Long jobId){
+        Request request = requestRepository.findById(requestId).orElseThrow(() -> new EntityNotFoundException("Request not found for Id: "+ requestId));
+        Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found for ID: "+ jobId));
+        if(!job.getRequest().getId().equals(requestId)){
+            throw new IllegalArgumentException("Job does not belong to the specified request");
+        }
+        job.setResultFinalized(false);
+        jobRepository.save(job);
+    }
+
+    @Override
+    public boolean verifyEmailWithRequest(UUID requestId, String emailId) {
+        // Fetch the request based on requestId
+        Request request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+        System.out.println(request.getEmail());
+        System.out.println(emailId);
+        // Check if the emailId matches the request's associated email
+        return request.getEmail().equals(emailId);
+    }
+
+    @Override
+    public JobDto getFinalizedJob(UUID requestId) {
+       Request request = requestRepository.findById(requestId).orElseThrow(() -> new RuntimeException("Request not found"));
+       List<Job> jobs = request.getJobs();
+       Job finalizedJob = jobs.stream()
+                .filter(Job::isResultFinalized)  // Assuming there's a method to check the resultFinalized flag
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No finalized job found for the request"));
+       return jobUtils.convertToDto(request, finalizedJob);
+    }
+
+    public boolean isAnyJobFinalized(UUID requestId) {
+        return jobRepository.existsByRequestIdAndResultFinalized(requestId, true);
+    }
+
+
 }
