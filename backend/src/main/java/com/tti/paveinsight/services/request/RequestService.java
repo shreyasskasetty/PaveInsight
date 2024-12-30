@@ -20,6 +20,8 @@ public interface RequestService {
     RequestDto submitJobForRequest(UUID requestId);
     RequestDto updateRequest(UUID id, RequestDto requestDto);
     List<JobDto> getResultsJobs(UUID id);
+    String getJobResultGeoJson(UUID requestId, Long jobId);
+
     String getJobResult(UUID requestId, Long jobId);
 
     void finalizeJob(UUID requestId, Long jobId);

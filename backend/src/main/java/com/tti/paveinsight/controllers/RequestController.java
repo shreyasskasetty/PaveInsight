@@ -152,6 +152,16 @@ public class RequestController {
         return ResponseEntity.ok("Job Id: "+jobId+" deleted successfully");
     }
 
+    @GetMapping("{requestId}/job/{jobId}/geojson-result")
+    public ResponseEntity<String> getJobResultGeoJSON(@PathVariable UUID requestId, @PathVariable Long jobId) {
+        // Delegate logic to the service
+        String result = requestServiceImpl.getJobResultGeoJson(requestId, jobId);
+        if (result == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("{requestId}/job/{jobId}/result")
     public ResponseEntity<String> getJobResult(@PathVariable UUID requestId, @PathVariable Long jobId) {
         // Delegate logic to the service

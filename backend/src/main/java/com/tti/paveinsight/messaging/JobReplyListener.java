@@ -48,7 +48,6 @@ public class JobReplyListener {
             job.setResultData(resultDataJson);
             jobResponses.put(jobReply.getCorrelationId(), jobReply);
             // Save the updated job to the database
-
             String geoJSONURL = jobReply.getResultGeoJSONURL();
             String bucketName = s3Utils.extractBucketNameFromUrl(geoJSONURL);
             String fileName = s3Utils.extractFileNameFromUrl(geoJSONURL);
@@ -57,8 +56,8 @@ public class JobReplyListener {
             jobRepository.save(job);
             System.out.println("Received reply for correlation ID " + correlationId + ": " +
                     "Status: " + jobReply.getJobStatus() +
-                    ", Image URL: " + jobReply.getResultImageURL() +
-                    ", Shapefile URL: " + jobReply.getResultGeoJSONURL());
+                    ", Zipped Shapefile URL: " + jobReply.getResultZippedShapefileURL() +
+                    ", GeoJSON URL: " + jobReply.getResultGeoJSONURL());
 //            System.out.println(resultGeoJsonContent);
         } catch (Exception e) {
             System.err.println("Error handling job reply: " + e.getMessage());

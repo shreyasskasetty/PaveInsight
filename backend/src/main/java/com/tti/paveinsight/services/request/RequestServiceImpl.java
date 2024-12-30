@@ -206,7 +206,7 @@ public class RequestServiceImpl implements RequestService{
         return jobDtos;
     }
 
-    public String getJobResult(UUID requestId, Long jobId) {
+    public String getJobResultGeoJson(UUID requestId, Long jobId) {
         // Check if request exists
         Request request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new EntityNotFoundException("Request not found for ID: " + requestId));
@@ -222,6 +222,24 @@ public class RequestServiceImpl implements RequestService{
         System.out.println(job.getResultGeoJsonData());
         // Return the job result data (assuming Job entity has a `resultData` field)
         return job.getResultGeoJsonData();
+    }
+
+    public String getJobResult(UUID requestId, Long jobId) {
+        // Check if request exists
+        Request request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new EntityNotFoundException("Request not found for ID: " + requestId));
+
+        // Verify job belongs to the request
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new EntityNotFoundException("Job not found for ID: " + jobId));
+
+        if (!job.getRequest().getId().equals(requestId)) {
+            throw new IllegalArgumentException("Job does not belong to the specified request");
+        }
+
+        System.out.println(job.getResultGeoJsonData());
+        // Return the job result data (assuming Job entity has a `resultData` field)
+        return job.getResultData();
     }
 
     @Override
