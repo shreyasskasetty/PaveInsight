@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { JobDto } from '../api/fetchResults';
 import { fetchFinalizedJob } from '../api/fetchResults';
 import { ArrowLeft } from 'lucide-react';
+import { getRequestDetails } from '@/lib/api/request-api';
 
 const ResultsPage = () => {
     const router = useRouter();
@@ -16,7 +17,7 @@ const ResultsPage = () => {
     const [job, setJob] = useState<JobDto | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    
+    const [request, setRequest] = useState<any | null>(null);
     function isValidUUID(uuid: string) {
         return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
     }
@@ -32,6 +33,8 @@ const ResultsPage = () => {
             throw new Error('Invalid Request ID');
         }
         const jobResult = await fetchFinalizedJob(id, emailId);
+        const requestDetails = await getRequestDetails(id);
+        setRequest(requestDetails)
         setJob(jobResult);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch jobs');
@@ -109,7 +112,7 @@ const ResultsPage = () => {
                 </Alert>
                 )}
     
-                {job && (
+                {job && request && (
                 <div className="mt-6">
                     <h2 className="text-xl font-semibold mb-3">Available Jobs</h2>
                     <div className="space-y-2">
@@ -119,6 +122,9 @@ const ResultsPage = () => {
                         className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                         >
                         {/* <div className="font-medium">Job ID: {job.id}</div> */}
+                        <div className="text-sm text-gray-600">Name: {request.username}</div>
+                        <div className="text-sm text-gray-600">Email: {request.email}</div>
+                        <div className="text-sm text-gray-600">Company Name: {request.companyName}</div>
                         <div className="text-sm text-gray-600">Status: {job.status}</div>
                         <div className="text-sm text-gray-600">
                             Created: {new Date(job.createdAt).toLocaleString()}

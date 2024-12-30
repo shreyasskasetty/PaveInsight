@@ -104,11 +104,6 @@ const Header: React.FC<HeaderProps> = ({ onPlaceSelected, onToggleDrawing, setDr
               <StraightLineIcon fontSize="small" />
             </ListItemIcon>
           </MenuItem>
-          <MenuItem onClick={() => handleMenuClose(google.maps.drawing.OverlayType.CIRCLE)}>
-            <ListItemIcon>
-              <CircleIcon fontSize="small" />
-            </ListItemIcon>
-          </MenuItem>
           <MenuItem onClick={() => handleMenuClose(null)}>
             <ListItemIcon>
               <SelectIcon fontSize="small" />

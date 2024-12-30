@@ -13,6 +13,17 @@ export const deleteJob = async (requestId: string, jobId: number) =>{
     }
 }
 
+export const getJob = async (requestId: string, jobId: number) =>{
+    try{
+        const response = await axios.get(`${BASE_API_URL}/${requestId}/job/${jobId}`);
+        console.log(response)
+        return response;
+    } catch(error: any) {
+        console.log(error)
+        throw error.response?.data || error.message;
+    }
+}
+
 export const finalizeJob = async (requestId: string, jobId: number) =>{
     try{
         const response = await axios.post(`${BASE_API_URL}/${requestId}/job/${jobId}/finalize`);

@@ -8,8 +8,11 @@ import { fetchResultData, getRequestDetails } from '@/lib/api/request-api';
 import { extractResultData } from '@/lib/utils/results';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Mail, Building, Phone } from 'lucide-react';
-import { fetchJobResult } from '@/app/api/fetchResults';
+import { ArrowLeft, Mail, Building, Phone, Download } from 'lucide-react';
+import { fetchJobResult, fetchJobResultGeoJSON } from '@/app/api/fetchResults';
+import { notification } from 'antd';
+import { getJob } from '@/lib/api/job-api';
+import { Person, Person2Outlined, PersonOutline } from '@mui/icons-material';
 
 // Dynamically import components (avoid SSR rendering issues)
 const MapTab = dynamic(() => import('../../../../ui/resultTabs/MapTab'), { ssr: false });
@@ -24,10 +27,54 @@ const ResultsPage: React.FC = () => {
     
     const [loading, setLoading] = useState(true);
     const [tabLoading, setTabLoading] = useState(false);
+    const [downloadLoading, setDownloadLoading] = useState(false);
     const [data, setData] = useState<ResultData | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'map' | 'statistics' | 'summary'>('map');
     const [request, setRequest] = useState<any>(null);
+    const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+
+    const fetchShapefileURL = async (requestId: string, jobId: string) => {
+        try{
+            const url = await fetchJobResult(requestId, parseInt(jobId));
+            setDownloadUrl(url);
+        } catch(error: any) {
+            console.log(error)
+            throw error.response?.data || error.message
+        }
+    }
+
+    const handleDownloadShapefile = async () => {
+        setDownloadLoading(true);
+        try {
+    
+          // If the URL is missing, handle the error (e.g., show a notification)
+          if (!downloadUrl) {
+            notification.error({
+              message: 'Download Failed',
+              description: 'No download URL was provided for the shapefile.',
+            });
+            return;
+          }
+      
+          // Create a temporary anchor element to trigger download
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.setAttribute('download', `shapefile_${requestId}_${jobId}.zip`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } catch (err: any) {
+          notification.error({
+            message: 'Download Failed',
+            description: 'There was an error downloading the shapefile.',
+          });
+          setError('Failed to download shapefile');
+        } finally {
+          setDownloadLoading(false);
+        }
+    };
+      
 
     useEffect(() => {
         const fetchData = async () => {
@@ -36,8 +83,9 @@ const ResultsPage: React.FC = () => {
                     throw new Error('Request ID and Job ID are required');
                 }
                 const requestInfo = await getRequestDetails(requestId);
-                const responseData = await fetchJobResult(requestId, parseInt(jobId));
+                const responseData = await fetchJobResultGeoJSON(requestId, parseInt(jobId));
                 const resultData = extractResultData(responseData);
+                fetchShapefileURL(requestId, jobId);
                 setData(resultData);
                 setActiveTab('map');
                 setRequest(requestInfo);
@@ -116,22 +164,40 @@ const ResultsPage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            {request && (
-                                <div className="text-sm space-y-2">
-                                    <div className="flex items-center text-gray-600">
-                                        <Mail className="h-4 w-4 mr-2" />
-                                        <span>{request.email}</span>
+                            <div className="flex items-start space-x-4">
+                                {request && (
+                                    <div className="text-sm space-y-2">
+                                        <div className="flex items-center text-gray-600">
+                                            <PersonOutline className="h-4 w-4 mr-2" />
+                                            <span>{request.username}</span>
+                                        </div>
+                                        <div className="flex items-center text-gray-600">
+                                            <Mail className="h-4 w-4 mr-2" />
+                                            <span>{request.email}</span>
+                                        </div>
+                                        <div className="flex items-center text-gray-600">
+                                            <Building className="h-4 w-4 mr-2" />
+                                            <span>{request.companyName}</span>
+                                        </div>
+                                        <div className="flex items-center text-gray-600">
+                                            <Phone className="h-4 w-4 mr-2" />
+                                            <span>{request.phoneNumber}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center text-gray-600">
-                                        <Building className="h-4 w-4 mr-2" />
-                                        <span>{request.companyName}</span>
-                                    </div>
-                                    <div className="flex items-center text-gray-600">
-                                        <Phone className="h-4 w-4 mr-2" />
-                                        <span>{request.phoneNumber}</span>
-                                    </div>
-                                </div>
-                            )}
+                                )}
+                                <Button
+                                    onClick={handleDownloadShapefile}
+                                    disabled={downloadLoading}
+                                    className="ml-4"
+                                >
+                                    {downloadLoading ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2" />
+                                    ) : (
+                                        <Download className="h-4 w-4 mr-2" />
+                                    )}
+                                    Download Shapefile
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>

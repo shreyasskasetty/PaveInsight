@@ -29,6 +29,18 @@ export const fetchFinalizedJob = async (requestId: string, emailId: string): Pro
   }
 };
 
+export const fetchJobResultGeoJSON = async (requestId: string, jobId: number): Promise<string> => {
+  try {
+    const response = await axios.get<string>(`${API_BASE_URL}/${requestId}/job/${jobId}/geojson-result`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch job result');
+    }
+    throw error;
+  }
+}
+
 export const fetchJobResult = async (requestId: string, jobId: number): Promise<string> => {
   try {
     const response = await axios.get<string>(`${API_BASE_URL}/${requestId}/job/${jobId}/result`);
