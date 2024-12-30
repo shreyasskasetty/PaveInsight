@@ -143,8 +143,8 @@ class AsyncConsumer:
         """Processes the job by running the pipeline and returns the result URLs."""
         geojson_string = job_data.get("geoJson")
         try:
-            result_image_url, result_shapefile_url = run_pipeline(geojson_string, jobId=jobId)
-            return result_image_url, result_shapefile_url
+            result_zipped_shape_files, result_shapefile_url = run_pipeline(geojson_string, jobId=jobId)
+            return result_zipped_shape_files, result_shapefile_url
         except Exception as e:
             LOGGER.error(f"Error processing job: {e}")
             raise
@@ -168,7 +168,7 @@ class AsyncConsumer:
         
         message = {
             "correlationId": properties.correlation_id,
-            "resultImageURL": None,
+            "resultZippedShapefileURL": None,
             "resultGeoJSONURL": None,
             "jobStatus": None,
             "jobId": job_data.get("id"),
@@ -176,9 +176,9 @@ class AsyncConsumer:
         }
         print(message)
         try:
-            result_image_url, result_geojson_url = await self.process_job_async(job_data, properties.correlation_id)
+            result_zipped_shapefile_url, result_geojson_url = await self.process_job_async(job_data, properties.correlation_id)
             message["jobStatus"] = "complete"
-            message["resultImageURL"] = result_image_url
+            message["resultZippedShapefileURL"] = result_zipped_shapefile_url
             message["resultGeoJSONURL"] = result_geojson_url
         except Exception as e:
             message["jobStatus"] = "incomplete"

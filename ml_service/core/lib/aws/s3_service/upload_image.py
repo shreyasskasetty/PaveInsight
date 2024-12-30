@@ -4,6 +4,7 @@ from botocore.exceptions import NoCredentialsError, ClientError
 from dotenv import load_dotenv
 import os
 import sys
+import zipfile
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '../../../../', '.env'))
 class S3Uploader:
@@ -22,6 +23,25 @@ class S3Uploader:
         with open(file_path, 'r') as config_file:
             config = yaml.safe_load(config_file)
         return config
+    
+    def _zip_files(self, file_paths, output_zip):
+        """
+        Creates a zip archive (output_zip) containing the provided file_paths.
+        
+        :param file_paths: List of file paths to include in the zip archive.
+        :param output_zip: Output zip file name (e.g. 'archive.zip').
+        """
+        with zipfile.ZipFile(output_zip, 'w') as zipf:
+            for file_path in file_paths:
+                zipf.write(file_path)
+        print(f"Created {output_zip}")
+        return output_zip
+
+    def zip_and_upload(self, file_paths):
+        # Zip the files
+        zip_file_path = self._zip_files(file_paths, file_paths[0].replace(".shp", ".zip"))
+        # Upload the zipped file
+        return self.upload_image(zip_file_path)
 
     def upload_image(self, file_path):
         # Construct object key with optional folder

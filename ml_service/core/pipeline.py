@@ -46,7 +46,10 @@ def convert_shapefile_to_geojson(shapefile_path: str, geojson_path: str):
     else:
         geojson_data = geojson_driver.CopyDataSource(data_source, geojson_path)
         print(f"Conversion successful. Output saved at {geojson_path}")
-        
+
+def generate_shapefile_extensions(shape_file_path: str) -> list:
+    return [shape_file_path, shape_file_path.replace(".shp", ".dbf"), shape_file_path.replace(".shp", ".shx"), shape_file_path.replace(".shp", ".prj"), shape_file_path.replace(".shp", ".cpg")]
+
 def run_pipeline(geojson_string, jobId: str):
     try:
         clean_up()
@@ -75,14 +78,18 @@ def run_pipeline(geojson_string, jobId: str):
     # upload to s3 bucket
         config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../configs/s3config.yaml'))
         uploader = S3Uploader(config_path)
-        image_url = uploader.upload_image(result_image_path)
+        # image_url = uploader.upload_image(result_image_path)
         geojson_file_url = uploader.upload_image(result_geojson_file_path)
+        shape_file_paths = generate_shapefile_extensions(pci_shape_file_path)
+        shape_zip_file_url = uploader.zip_and_upload(shape_file_paths)
         try:
             clean_up()
         except Exception as e:
             print(f"Clean up failed: {e}")
-        return image_url, geojson_file_url
+        return shape_zip_file_url, geojson_file_url 
     except Exception as e:
         raise Exception(f"An error occurred during the pipeline execution: {e}")
     
-    
+
+# if __name__ == "__main__":
+#     print(generate_shapefile_extensions("data/inputs/college_station_streets.shp"))
