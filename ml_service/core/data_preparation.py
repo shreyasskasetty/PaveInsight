@@ -98,7 +98,6 @@ def generate_points_data(clipped_polylines: gpd.GeoDataFrame, interval: float = 
             line = row.geometry
             line_name = row.get('FULL_NAME', f'line_{idx}')  # Use 'full_name' if available
             surface = row.get('Surface', 'unknown')  # Use 'surface' field or 'unknown' if not present
-            print(surface)
             # Increment the occurrence count for this line name
             name_occurrences[line_name] += 1
             occurrence_number = name_occurrences[line_name]
@@ -136,7 +135,6 @@ def process_clip_points(polyline_path: str, geojson: str, interval: float = 100)
     polyline_gdf, geojson_gdf = load_data(polyline_path, geojson)
     # Check if either GeoDataFrame is empty
     if polyline_gdf is None or geojson_gdf is None or polyline_gdf.empty or geojson_gdf.empty:
-        print(polyline_gdf, geojson_gdf)
         raise ValueError("Failed to load polyline or GeoJSON data.")
     
     # Clip polylines

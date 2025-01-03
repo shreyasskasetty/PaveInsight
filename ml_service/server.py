@@ -9,6 +9,7 @@ from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exchange_type import ExchangeType
 from dotenv import load_dotenv
 from core.pipeline import run_pipeline
+from core.lib.notification.stomp_notification_manager import STOMPConnectionManager
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.', '.env'))
 
@@ -27,6 +28,7 @@ class AsyncConsumer:
     EXCHANGE_TYPE = ExchangeType.direct
     REPLY_QUEUE = 'job-reply-queue'  
 
+
     def __init__(self, amqp_url):
         self._amqp_url = amqp_url
         self._connection = None
@@ -35,6 +37,7 @@ class AsyncConsumer:
         self._consumer_tag = None
         self.should_reconnect = False
         self._prefetch_count = 1
+        self._notification_manager = None
 
     def connect(self):
         """Establish an asynchronous connection to RabbitMQ."""
@@ -57,6 +60,11 @@ class AsyncConsumer:
         """Callback when connection is opened successfully."""
         LOGGER.info("Connection opened")
         self._connection = connection
+        self._notification_manager = STOMPConnectionManager(
+            ws_url="ws://localhost:8080/ws",
+            debug=True
+        )
+        self._notification_manager.connect(timeout=5)
         self.open_channel()
 
 
@@ -143,7 +151,7 @@ class AsyncConsumer:
         """Processes the job by running the pipeline and returns the result URLs."""
         geojson_string = job_data.get("geoJson")
         try:
-            result_zipped_shape_files, result_shapefile_url = run_pipeline(geojson_string, jobId=jobId)
+            result_zipped_shape_files, result_shapefile_url = run_pipeline(geojson_string, jobId=jobId, notification_manager=self._notification_manager)
             return result_zipped_shape_files, result_shapefile_url
         except Exception as e:
             LOGGER.error(f"Error processing job: {e}")
@@ -165,7 +173,15 @@ class AsyncConsumer:
         job_data = json.loads(body)
         if isinstance(job_data, str):
             job_data = json.loads(job_data)
-        
+        self._notification_manager.send_message(
+            destination="/app/notify",
+            body={
+                    "jobId": job_data.get("id"),
+                    "requestId": job_data.get("requestId"),
+                    "status": "IN_PROGRESS",
+                    "message": "Job is being processed",
+                }
+        )
         message = {
             "correlationId": properties.correlation_id,
             "resultZippedShapefileURL": None,
@@ -174,13 +190,31 @@ class AsyncConsumer:
             "jobId": job_data.get("id"),
             "error": None
         }
-        print(message)
+        # print(message)
         try:
             result_zipped_shapefile_url, result_geojson_url = await self.process_job_async(job_data, properties.correlation_id)
             message["jobStatus"] = "complete"
             message["resultZippedShapefileURL"] = result_zipped_shapefile_url
             message["resultGeoJSONURL"] = result_geojson_url
+            self._notification_manager.send_message(
+            destination="/app/notify",
+            body={
+                    "jobId": job_data.get("id"),
+                    "requestId": job_data.get("requestId"),
+                    "status": "COMPLETED",
+                    "message": "Job completed successfully",
+                }
+            )
         except Exception as e:
+            self._notification_manager.send_message(
+            destination="/app/notify",
+            body={
+                    "jobId": job_data.get("id"),
+                    "requestId": job_data.get("requestId"),
+                    "status": "FAILED",
+                    "message": "Job failed: " + str(e),
+                }
+            )
             message["jobStatus"] = "incomplete"
             message["error"] = str(e)
 

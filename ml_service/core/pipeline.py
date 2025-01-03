@@ -8,6 +8,7 @@ from core.pci_prediction_visualization import predict_and_save_image
 import json
 import warnings
 from core.lib.aws.s3_service.upload_image import S3Uploader
+from core.lib.notification.stomp_notification_manager import STOMPConnectionManager
 import shutil  # Import shutil for directory operations
 
 # Ignore FutureWarnings
@@ -50,7 +51,7 @@ def convert_shapefile_to_geojson(shapefile_path: str, geojson_path: str):
 def generate_shapefile_extensions(shape_file_path: str) -> list:
     return [shape_file_path, shape_file_path.replace(".shp", ".dbf"), shape_file_path.replace(".shp", ".shx"), shape_file_path.replace(".shp", ".prj"), shape_file_path.replace(".shp", ".cpg")]
 
-def run_pipeline(geojson_string, jobId: str):
+def run_pipeline(geojson_string, jobId: str, notification_manager: STOMPConnectionManager):
     try:
         clean_up()
     except Exception as e:
