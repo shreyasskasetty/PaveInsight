@@ -151,8 +151,8 @@ class AsyncConsumer:
         """Processes the job by running the pipeline and returns the result URLs."""
         geojson_string = job_data.get("geoJson")
         try:
-            result_zipped_shape_files, result_shapefile_url = run_pipeline(geojson_string, jobId=jobId, notification_manager=self._notification_manager)
-            return result_zipped_shape_files, result_shapefile_url
+            pipeline_result = run_pipeline(geojson_string, jobId=jobId, notification_manager=self._notification_manager)
+            return pipeline_result
         except Exception as e:
             LOGGER.error(f"Error processing job: {e}")
             raise
@@ -186,16 +186,19 @@ class AsyncConsumer:
             "correlationId": properties.correlation_id,
             "resultZippedShapefileURL": None,
             "resultGeoJSONURL": None,
+            "superResolutionURL": None,
             "jobStatus": None,
             "jobId": job_data.get("id"),
             "error": None
         }
         # print(message)
         try:
-            result_zipped_shapefile_url, result_geojson_url = await self.process_job_async(job_data, properties.correlation_id)
+            pipeline_result = await self.process_job_async(job_data, properties.correlation_id)
             message["jobStatus"] = "complete"
-            message["resultZippedShapefileURL"] = result_zipped_shapefile_url
-            message["resultGeoJSONURL"] = result_geojson_url
+            message["resultZippedShapefileURL"] = pipeline_result.get("shape_files_zip_url")
+            message["resultGeoJSONURL"] = pipeline_result.get("geojson_file_url")
+            message["superResolutionURL"] = pipeline_result.get("super_resolution_url")
+            message["bounds"] = pipeline_result.get("bounds")
             self._notification_manager.send_message(
             destination="/app/notify",
             body={
