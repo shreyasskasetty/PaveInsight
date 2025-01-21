@@ -9,9 +9,13 @@ from shapely.geometry import LineString, Point
 from shapely.ops import nearest_points
 from torchvision.models import resnet50
 from typing import Optional
+from rasterio.mask import mask
 import matplotlib.pyplot as plt
 import contextily as cx
 import pandas as pd
+import rasterio
+from shapely.geometry import shape
+from core.super_resolution import save_and_convert_super_resolution_image_tif
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -198,11 +202,54 @@ def plot_pci_network(df: gpd.GeoDataFrame, output_image_path: str):
     plt.close(fig)
     return output_image_path
 
-def predict_and_save_image(points_gdf: str, jobId: str):
+def predict_and_save_image(geojson_string: str, points_gdf: str, jobId: str):
     final_polyline_gdf, result_shapefile_path = predict(points_gdf=points_gdf, jobId=jobId)
     result_image_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'../data/outputs/network_pci_{jobId}.png'))
     plot_pci_network(final_polyline_gdf, output_image_path=result_image_path)
-    return result_image_path, result_shapefile_path
+    bounds_wgs84, crs_wgs84 = save_and_convert_super_resolution_image_tif(
+        geojson_string=geojson_string,
+        raster_file_name="SuperResolution_Image.tif",
+        out_raster_file_name=f"sri_{jobId}.tif",
+        output_png_path = f"sri_{jobId}.png"
+    )
+    return bounds_wgs84, result_image_path, result_shapefile_path
 
-result_image_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'../data/outputs/network_pci_{1}.png'))
+# result_image_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'../data/outputs/network_pci_{1}.png'))
 
+# def save_super_resolution_image_tif(geojson_string: str, raster_file_name: str, out_raster_file_name: str):
+#     geojson_dict = json.loads(geojson_string)
+#     geometry = shape(geojson_dict["geometry"])
+#     properties = geojson_dict.get("properties", {})
+#     geo_df = gpd.GeoDataFrame([properties], geometry=[geometry])
+#     geo_df.set_crs(epsg=4326, inplace=True)
+#     full_raster_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'../data/inputs/super_resolution/{raster_file_name}'))
+    
+#     with rasterio.open(full_raster_path) as src:
+#         raster_crs = src.crs
+    
+#     geo_df = geo_df.to_crs(raster_crs)
+    
+#     def get_features(gdf):
+#         """Function to parse features from GeoDataFrame into a format rasterio accepts"""
+#         import json
+#         return [json.loads(gdf.to_json())['features'][0]['geometry']]
+    
+#     coords = get_features(geo_df)
+
+
+#     with rasterio.open(full_raster_path) as src:
+#         out_image, out_transform = mask(src, shapes=coords, crop=True)
+#         out_meta = src.meta.copy()
+
+#     out_meta.update({
+#         "driver": "GTiff",
+#         "height": out_image.shape[1],
+#         "width": out_image.shape[2],
+#         "transform": out_transform,
+#         "crs": raster_crs
+#     })
+
+#     result_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'../data/outputs/{out_raster_file_name}'))
+#     # Save the masked raster
+#     with rasterio.open(result_path, 'w', **out_meta) as dest:
+#         dest.write(out_image)

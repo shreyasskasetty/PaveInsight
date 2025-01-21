@@ -53,6 +53,8 @@ public class JobReplyListener {
             String fileName = s3Utils.extractFileNameFromUrl(geoJSONURL);
             String resultGeoJsonContent = storageService.readFile(bucketName, fileName);
             job.setResultGeoJsonData(resultGeoJsonContent);
+            job.setBounds(jobReply.getBounds());
+            job.setSuperResolutionURL(jobReply.getSuperResolutionURL());
             jobRepository.save(job);
             System.out.println("Received reply for correlation ID " + correlationId + ": " +
                     "Status: " + jobReply.getJobStatus() +

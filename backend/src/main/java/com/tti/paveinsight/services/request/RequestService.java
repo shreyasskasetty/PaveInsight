@@ -2,6 +2,7 @@ package com.tti.paveinsight.services.request;
 
 import com.tti.paveinsight.dto.JobDto;
 import com.tti.paveinsight.dto.RequestDto;
+import com.tti.paveinsight.dto.SuperResolutionDto;
 import com.tti.paveinsight.models.Job;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,8 @@ public interface RequestService {
     String getJobResultGeoJson(UUID requestId, Long jobId);
 
     String getJobResult(UUID requestId, Long jobId);
+
+    SuperResolutionDto getSuperResolutionResultData(UUID requestId, Long jobId);
 
     void finalizeJob(UUID requestId, Long jobId);
 

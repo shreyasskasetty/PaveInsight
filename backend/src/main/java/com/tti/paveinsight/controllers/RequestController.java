@@ -1,9 +1,6 @@
 package com.tti.paveinsight.controllers;
 
-import com.tti.paveinsight.dto.EmailRequestDto;
-import com.tti.paveinsight.dto.JobDto;
-import com.tti.paveinsight.dto.RequestDto;
-import com.tti.paveinsight.dto.SendEmailDto;
+import com.tti.paveinsight.dto.*;
 import com.tti.paveinsight.services.email.EmailServiceImpl;
 import com.tti.paveinsight.services.request.RequestServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,6 +163,15 @@ public class RequestController {
     public ResponseEntity<String> getJobResult(@PathVariable UUID requestId, @PathVariable Long jobId) {
         // Delegate logic to the service
         String result = requestServiceImpl.getJobResult(requestId, jobId);
+        if (result == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("{requestId}/job/{jobId}/sri-result")
+    public ResponseEntity<SuperResolutionDto> getSuperResolutionData(@PathVariable UUID requestId, @PathVariable Long jobId){
+        SuperResolutionDto result = requestServiceImpl.getSuperResolutionResultData(requestId, jobId);
         if (result == null) {
             return ResponseEntity.notFound().build();
         }

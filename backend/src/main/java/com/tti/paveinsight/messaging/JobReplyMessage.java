@@ -10,10 +10,10 @@ public class JobReplyMessage {
     private String correlationId;
     private String resultZippedShapefileURL;
     private String resultGeoJSONURL;
+    private String superResolutionURL;
+    private String bounds;
     private String jobStatus;
-
     private Long jobId;
-
     private String error;
 
 
@@ -23,6 +23,8 @@ public class JobReplyMessage {
                 "correlationId='" + correlationId + '\'' +
                 ", resultImageURL='" + resultZippedShapefileURL + '\'' +
                 ", resultShapefileURL='" + resultGeoJSONURL + '\'' +
+                ", superResolutionURL='" + superResolutionURL + '\'' +
+                ", bounds='" + bounds + '\'' +
                 ", jobStatus='" + jobStatus + '\'' +
                 ", error='" + error + '\'' +
                 '}';

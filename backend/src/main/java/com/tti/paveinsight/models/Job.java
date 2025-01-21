@@ -28,6 +28,11 @@ public class Job {
     @Column(columnDefinition = "json")
     private String resultGeoJsonData;
 
+    private String superResolutionURL;
+
+    @Column(columnDefinition = "json")
+    private String bounds;
+
     private String satelliteImageURL;
     @LastModifiedDate
     @Temporal(TemporalType.TIMESTAMP)

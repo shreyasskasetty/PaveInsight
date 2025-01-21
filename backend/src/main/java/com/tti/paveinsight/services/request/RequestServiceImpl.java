@@ -2,6 +2,7 @@ package com.tti.paveinsight.services.request;
 
 import com.tti.paveinsight.dto.JobDto;
 import com.tti.paveinsight.dto.RequestDto;
+import com.tti.paveinsight.dto.SuperResolutionDto;
 import com.tti.paveinsight.models.Job;
 import com.tti.paveinsight.models.Request;
 import com.tti.paveinsight.repositories.JobRepository;
@@ -240,6 +241,21 @@ public class RequestServiceImpl implements RequestService{
         System.out.println(job.getResultGeoJsonData());
         // Return the job result data (assuming Job entity has a `resultData` field)
         return job.getResultData();
+    }
+
+    @Override
+    public SuperResolutionDto getSuperResolutionResultData(UUID requestId, Long jobId) {
+        Request request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new EntityNotFoundException("Request not found for ID: " + requestId));
+
+        // Verify job belongs to the request
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new EntityNotFoundException("Job not found for ID: " + jobId));
+
+        if (!job.getRequest().getId().equals(requestId)) {
+            throw new IllegalArgumentException("Job does not belong to the specified request");
+        }
+        return jobUtils.converToSuperResolutionDto(request, job);
     }
 
     @Override
