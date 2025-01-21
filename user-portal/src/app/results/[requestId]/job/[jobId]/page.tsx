@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { ResultData } from '@/types/resultData';
+import { getSuperResolutionResult } from '@/lib/api/job-api';
 import { fetchResultData, getRequestDetails } from '@/lib/api/request-api';
 import { extractResultData } from '@/lib/utils/results';
 import { useParams } from 'next/navigation';
@@ -33,6 +34,8 @@ const ResultsPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'map' | 'statistics' | 'summary'>('map');
     const [request, setRequest] = useState<any>(null);
     const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+    const [imageBounds, setImageBounds] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
+    const [imageUrl, setImageUrl] = useState<string>('');
 
     const fetchShapefileURL = async (requestId: string, jobId: string) => {
         try{
@@ -82,9 +85,14 @@ const ResultsPage: React.FC = () => {
                 if (!requestId || !jobId) {
                     throw new Error('Request ID and Job ID are required');
                 }
+                const superResolutionData = await getSuperResolutionResult(requestId, parseInt(jobId));
                 const requestInfo = await getRequestDetails(requestId);
                 const responseData = await fetchJobResultGeoJSON(requestId, parseInt(jobId));
                 const resultData = extractResultData(responseData);
+                console.log(JSON.parse(superResolutionData.bounds))
+                console.log(superResolutionData.superResolutionImageURL)
+                setImageBounds(JSON.parse(superResolutionData.bounds));
+                setImageUrl(superResolutionData.superResolutionURL);
                 fetchShapefileURL(requestId, jobId);
                 setData(resultData);
                 setActiveTab('map');
@@ -250,7 +258,7 @@ const ResultsPage: React.FC = () => {
                             </div>
                         ) : (
                             <>
-                                {activeTab === 'map' && data?.mapData && <MapTab data={data.mapData} />}
+                                {activeTab === 'map' && data?.mapData && <MapTab data={data.mapData} imageBounds={imageBounds} imageUrl={imageUrl} />}
                                 {activeTab === 'statistics' && data?.statistics && <StatisticsTab data={data.statistics} />}
                                 {activeTab === 'summary' && data?.summary && <SummaryTable data={data.summary} />}
                             </>

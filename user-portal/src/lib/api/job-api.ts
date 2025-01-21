@@ -51,3 +51,12 @@ export const submitJob = async (id: string) => {
         return { status: error.response?.status || 500, message: error.response?.data || error.message };
     }
 }
+
+export const getSuperResolutionResult = async(requestId: string, jobId: number) => {
+    try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_REQUESTS_API_URL}/${requestId}/job/${jobId}/sri-result`);
+        return response.data;
+    } catch (error: any){
+        throw error.response?.data || error.message;
+    }
+}

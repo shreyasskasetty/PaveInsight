@@ -10,6 +10,10 @@ export interface GeoJsonFeature {
     };
 }
 
+export interface SuperResolutionResultData{
+    superResolutionImageURL: string;
+    bounds: { north: number; south: number; east: number; west: number }
+}
 export interface ResultData {
     mapData: {
         center: { lat: number; lng: number };

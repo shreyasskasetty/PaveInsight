@@ -62,7 +62,6 @@ export const sendResultsEmail = async (requestId: string, link: string) => {
   }
 };
 
-
 export const getRequestDetails = async(id: string) => {
     try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_REQUESTS_API_URL}/${id}`)
