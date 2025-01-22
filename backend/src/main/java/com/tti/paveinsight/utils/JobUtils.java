@@ -6,8 +6,6 @@ import com.tti.paveinsight.models.Job;
 import com.tti.paveinsight.models.Request;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
 public class JobUtils {
     public JobDto convertToDto(Request request, Job job) {
@@ -16,7 +14,7 @@ public class JobUtils {
                 job.getStatus(),
                 job.getResultData(),
                 job.getResultGeoJsonData(),
-                job.getSatelliteImageURL(),
+                job.getSatelliteImageS3URL(),
                 job.getCreatedAt(),
                 job.getUpdatedAt(),
                 job.isResultFinalized(),
@@ -26,6 +24,6 @@ public class JobUtils {
         );
     }
     public SuperResolutionDto converToSuperResolutionDto(Request request, Job job){
-        return new SuperResolutionDto(job.getSuperResolutionURL(), job.getBounds());
+        return new SuperResolutionDto(job.getSuperResolutionImageS3URL(), job.getBounds());
     }
 }

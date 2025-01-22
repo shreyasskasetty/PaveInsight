@@ -12,8 +12,6 @@ import com.tti.paveinsight.utils.JobUtils;
 import com.tti.paveinsight.utils.RequestUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -94,6 +92,15 @@ public class RequestServiceImpl implements RequestService{
 
     public void deleteRequestById(UUID id) {
         if (requestRepository.existsById(id)) {
+            //Step1: Remove the corresponding jobs from the database;
+            Request request = requestRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Request not found with ID: " + id));
+            List<Job> jobs = request.getJobs();
+            for(Job job: jobs){
+//                request.removeJob(job);
+                jobRepository.delete(job);
+                jobRepository.save(job);
+            }
+//            requestRepository.save(request);
             requestRepository.deleteById(id);
         } else {
             throw new IllegalArgumentException("Request not found with id: " + id);
@@ -129,7 +136,7 @@ public class RequestServiceImpl implements RequestService{
                 job.getStatus(),
                 job.getResultData(),
                 job.getResultGeoJsonData(),
-                job.getSatelliteImageURL(),
+                job.getSatelliteImageS3URL(),
                 job.getCreatedAt(),
                 job.getUpdatedAt(),
                 job.isResultFinalized(),
@@ -196,7 +203,7 @@ public class RequestServiceImpl implements RequestService{
                         job.getStatus(),
                         job.getResultData(),
                         job.getResultGeoJsonData(),
-                        job.getSatelliteImageURL(),
+                        job.getSatelliteImageS3URL(),
                         job.getCreatedAt(),
                         job.getUpdatedAt(),
                         job.isResultFinalized(),

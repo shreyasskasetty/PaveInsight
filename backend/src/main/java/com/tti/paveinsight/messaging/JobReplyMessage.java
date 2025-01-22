@@ -8,9 +8,10 @@ import lombok.Setter;
 public class JobReplyMessage {
 
     private String correlationId;
-    private String resultZippedShapefileURL;
-    private String resultGeoJSONURL;
-    private String superResolutionURL;
+    private String resultZippedShapefileS3URL;
+    private String resultGeoJsonS3URL;
+    private String superResolutionImageS3URL;
+    private String superResolutionTIFS3URL;
     private String bounds;
     private String jobStatus;
     private Long jobId;
@@ -21,9 +22,10 @@ public class JobReplyMessage {
     public String toString() {
         return "JobReplyMessage{" +
                 "correlationId='" + correlationId + '\'' +
-                ", resultImageURL='" + resultZippedShapefileURL + '\'' +
-                ", resultShapefileURL='" + resultGeoJSONURL + '\'' +
-                ", superResolutionURL='" + superResolutionURL + '\'' +
+                ", resultImageURL='" + resultZippedShapefileS3URL + '\'' +
+                ", resultShapefileURL='" + resultGeoJsonS3URL + '\'' +
+                ", superResolutionImageURL='" + superResolutionImageS3URL + '\'' +
+                ", superResolutionTIFURL='" + superResolutionTIFS3URL + '\'' +
                 ", bounds='" + bounds + '\'' +
                 ", jobStatus='" + jobStatus + '\'' +
                 ", error='" + error + '\'' +

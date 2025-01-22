@@ -3,8 +3,6 @@ package com.tti.paveinsight.models;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -28,12 +26,14 @@ public class Job {
     @Column(columnDefinition = "json")
     private String resultGeoJsonData;
 
-    private String superResolutionURL;
+    private String superResolutionImageS3URL;
+
+    private String superResolutionTIFS3URL;
 
     @Column(columnDefinition = "json")
     private String bounds;
 
-    private String satelliteImageURL;
+    private String satelliteImageS3URL;
     @LastModifiedDate
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
