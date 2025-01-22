@@ -184,9 +184,10 @@ class AsyncConsumer:
         )
         message = {
             "correlationId": properties.correlation_id,
-            "resultZippedShapefileURL": None,
-            "resultGeoJSONURL": None,
-            "superResolutionURL": None,
+            "resultZippedShapefileS3URL": None,
+            "resultGeoJsonS3URL": None,
+            "superResolutionImageS3URL": None,
+            "superResolutionTIFS3URL": None,
             "jobStatus": None,
             "jobId": job_data.get("id"),
             "error": None
@@ -195,9 +196,10 @@ class AsyncConsumer:
         try:
             pipeline_result = await self.process_job_async(job_data, properties.correlation_id)
             message["jobStatus"] = "complete"
-            message["resultZippedShapefileURL"] = pipeline_result.get("shape_files_zip_url")
-            message["resultGeoJSONURL"] = pipeline_result.get("geojson_file_url")
-            message["superResolutionURL"] = pipeline_result.get("super_resolution_url")
+            message["resultZippedShapefileS3URL"] = pipeline_result.get("shape_files_zip_s3_url")
+            message["resultGeoJsonS3URL"] = pipeline_result.get("geojson_file_s3_url")
+            message["superResolutionImageS3URL"] = pipeline_result.get("super_resolution_image_s3_url")
+            message["superResolutionTIFS3URL"] = pipeline_result.get("super_resolution_tif_s3_url")
             message["bounds"] = pipeline_result.get("bounds")
             self._notification_manager.send_message(
             destination="/app/notify",

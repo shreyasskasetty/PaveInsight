@@ -76,6 +76,7 @@ def run_pipeline(geojson_string, jobId: str, notification_manager: STOMPConnecti
     bounds_wgs84, result_image_path, pci_shape_file_path = predict_and_save_image(geojson_string = geojson_string, points_gdf=points_gdf, jobId=jobId)
     result_geojson_file_path = os.path.abspath(os.path.join(os.path.dirname(__file__),f"../data/outputs/{jobId}_pci.geojson"))
     result_super_resolution_image_path = os.path.abspath(os.path.join(os.path.dirname(__file__),f"../data/outputs/sri_{jobId}.png"))
+    result_super_resolution_tif_path = os.path.abspath(os.path.join(os.path.dirname(__file__),f"../data/outputs/sri_{jobId}.tif"))
     convert_shapefile_to_geojson(pci_shape_file_path, result_geojson_file_path)
     
     try:
@@ -83,24 +84,22 @@ def run_pipeline(geojson_string, jobId: str, notification_manager: STOMPConnecti
         config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../configs/s3config.yaml'))
         uploader = S3Uploader(config_path)
         # image_url = uploader.upload_image(result_image_path)
-        geojson_file_url = uploader.upload_image(result_geojson_file_path)
+        geojson_file_s3_url = uploader.upload_image(result_geojson_file_path)
         shape_file_paths = generate_shapefile_extensions(pci_shape_file_path)
-        shape_files_zip_url = uploader.zip_and_upload(shape_file_paths)
-        super_resolution_url = uploader.upload_image(result_super_resolution_image_path)
+        shape_files_zip_s3_url = uploader.zip_and_upload(shape_file_paths)
+        super_resolution_image_s3_url = uploader.upload_image(result_super_resolution_image_path)
+        super_resolution_tif_s3_url = uploader.upload_image(result_super_resolution_tif_path)
         try:
             clean_up()
         except Exception as e:
             print(f"Clean up failed: {e}")
         pipline_result = {
-            "super_resolution_url": super_resolution_url,
-            "shape_files_zip_url": shape_files_zip_url,
-            "geojson_file_url": geojson_file_url,
+            "super_resolution_image_s3_url": super_resolution_image_s3_url,
+            "shape_files_zip_s3_url": shape_files_zip_s3_url,
+            "geojson_file_s3_url": geojson_file_s3_url,
+            "super_resolution_tif_s3_url":  super_resolution_tif_s3_url,
             "bounds": bounds_wgs84
         }
         return pipline_result
     except Exception as e:
         raise Exception(f"An error occurred during the pipeline execution: {e}")
-    
-
-# if __name__ == "__main__":
-#     print(generate_shapefile_extensions("data/inputs/college_station_streets.shp"))
