@@ -15,7 +15,8 @@ export const fetchResultData = async (id: string| string[]) =>{
     console.log('fetching results')
     try{
         const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_REQUESTS_API_URL}/${id}/job-result`);
-        return response.data;
+        console.log(response.data);
+        // return response.data;
     } catch(error: any) {
         throw error.response?.data || error.message;
     }

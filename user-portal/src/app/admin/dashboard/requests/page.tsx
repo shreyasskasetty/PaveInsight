@@ -13,6 +13,7 @@ interface Request {
   username: string;
   email: string;
   geoJson: string;
+  jobs: any[];
   jobStatus: 'In Progress' | 'Completed' | 'Pending';
   requestStatus: 'In Progress' | 'Completed' | 'Pending';
   fileUrl: string;
@@ -53,6 +54,10 @@ const RequestsPage: React.FC = () => {
       });
     }
   };
+
+  const isJobFinalized = (jobs: any) => {
+    return jobs.some((job: any) => job.finalized);
+  }
 
   const handleStatusChange = async (value: string, record: Request) => {
     try {
@@ -120,10 +125,16 @@ const RequestsPage: React.FC = () => {
     },
     },
     {
-      title: 'Analysis Status',
+      title: 'Finalized',
       dataIndex: 'jobStatus',
       key: 'jobStatus',
-      render: (text: string) => text || 'Not Submitted',
+      render: (text: string, record: Request) => {
+        const jobs = record.jobs;
+        const isFinalized = isJobFinalized(jobs);
+        const displayStatus = isFinalized? 'Yes' : 'No';
+
+        return displayStatus;
+      },
     },
     {
       title: 'Download',

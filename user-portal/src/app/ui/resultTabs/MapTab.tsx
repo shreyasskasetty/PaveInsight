@@ -17,7 +17,7 @@ interface MapTabProps {
 const MapTab: React.FC<MapTabProps> = ({ data, imageUrl, imageBounds }) => {
     const isMapLoaded = useGoogleMapsScript();
     const [isOverlayVisible, setIsOverlayVisible] = useState(true);
-    const [isPolylinesVisible, setIsPolylinesVisible] = useState(false);
+    const [isPolylinesVisible, setIsPolylinesVisible] = useState(true);
     const overlayRef = useRef<google.maps.GroundOverlay | null>(null);
     const mapRef = useRef<google.maps.Map | null>(null);
     const polylinesRef = useRef<google.maps.Polyline[]>([]);
@@ -133,7 +133,7 @@ const MapTab: React.FC<MapTabProps> = ({ data, imageUrl, imageBounds }) => {
                         htmlFor="overlay-toggle"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                        Show Image Overlay
+                        Super Resolution Image
                     </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -146,7 +146,7 @@ const MapTab: React.FC<MapTabProps> = ({ data, imageUrl, imageBounds }) => {
                         htmlFor="polylines-toggle"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                        Show Street Data
+                        PCI Polyline
                     </label>
                 </div>
             </div>

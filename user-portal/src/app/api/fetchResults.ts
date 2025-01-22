@@ -41,9 +41,9 @@ export const fetchJobResultGeoJSON = async (requestId: string, jobId: number): P
   }
 }
 
-export const fetchJobResult = async (requestId: string, jobId: number): Promise<string> => {
+export const fetchJobResult = async (requestId: string, jobId: number): Promise<any> => {
   try {
-    const response = await axios.get<string>(`${API_BASE_URL}/${requestId}/job/${jobId}/result`);
+    const response = await axios.get<any>(`${API_BASE_URL}/${requestId}/job/${jobId}/result`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
