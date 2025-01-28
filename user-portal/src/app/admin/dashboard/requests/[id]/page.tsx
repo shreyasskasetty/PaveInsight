@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Spin, Typography, Button, Card, Row, Col, Space, Divider, Upload, message, Image, notification, Popconfirm, Table } from 'antd';
 import { DownloadOutlined, UploadOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
@@ -10,6 +10,7 @@ const { Title, Text } = Typography;
 import { getRequestStatusString } from '@/lib/utils/requests';
 import { useRouter } from 'next/navigation';
 import { sendResultsEmail } from '@/lib/api/request-api';
+import { useRefreshContext } from '@/app/context/RefreshContext';
 
 interface Job {
   id: string;
@@ -45,7 +46,7 @@ const RequestDetailsPage: React.FC = () => {
 
   const fetchRequestDetails = async () => {
     const requestInfo = await getRequestDetails(id as string);
-    setRequest(requestInfo);
+    setRequest({...requestInfo});
     console.log(requestInfo)
     setLoading(false);
 
@@ -169,7 +170,7 @@ const RequestDetailsPage: React.FC = () => {
         description: error || 'There was an issue sending the results email.',
       });
     }
-  };
+  };  
   const handleDownload = () => {
     try {
       if (request?.geoJson == null) {

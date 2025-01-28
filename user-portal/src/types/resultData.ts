@@ -20,7 +20,8 @@ export interface ResultData {
         average: number;
         distribution: {
             labels: string[];
-            values: number[];
+            counts: number[];
+            percentages: number[];
         };
     };
     summary: {

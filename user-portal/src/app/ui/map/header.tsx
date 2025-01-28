@@ -11,14 +11,11 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { userFormStore } from '@/store/form-store';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useMapControlContext } from './MapControlContext';
 
-type HeaderProps = {
-  onPlaceSelected: (place: google.maps.places.PlaceResult) => void;
-  onToggleDrawing: (tool: boolean) => void;
-  setDrawingTool: (tool: google.maps.drawing.OverlayType | null) => void;
-};
 
-const Header: React.FC<HeaderProps> = ({ onPlaceSelected, onToggleDrawing, setDrawingTool}) => {
+
+const Header: React.FC = () => {
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -29,6 +26,9 @@ const Header: React.FC<HeaderProps> = ({ onPlaceSelected, onToggleDrawing, setDr
   };
   const router = useRouter();
   const { data: session } = useSession();
+
+  const { onPlaceSelected, onToggleDrawing, setDrawingTool } = useMapControlContext();
+
   const onPlaceChanged = () => {
     if (autocomplete !== null) {
       const place = autocomplete.getPlace();

@@ -13,6 +13,7 @@ import {
 import {
   Badge
 } from "@/components/ui/badge"
+import { useRefreshContext } from '@/app/context/RefreshContext';
 
 type JobStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
 
@@ -60,7 +61,7 @@ const Header = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [stompClient, setStompClient] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-
+  const { triggerRefresh } = useRefreshContext()
   // Load notifications from localStorage
   useEffect(() => {
     const loadNotifications = () => {
@@ -120,6 +121,14 @@ const Header = () => {
     });
   };
 
+  const openNotificationMenu = () => {
+      setShowNotifications(true);
+      // Close the notification menu after 5 seconds
+      setTimeout(() => {
+        setShowNotifications(false);
+    }, 5000);
+  }
+
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -134,13 +143,20 @@ const Header = () => {
       heartbeatOutgoing: 4000,
     });
 
+    
     client.onConnect = () => {
       console.log('Connected to WebSocket');
-      
       client.subscribe('/all/messages', (message) => {
         try {
           const jobUpdate = JSON.parse(message.body);
           updateNotifications(jobUpdate);
+          openNotificationMenu();
+          if (jobUpdate.status === 'COMPLETED') { 
+            triggerRefresh();
+            window.location.reload();
+            console.log('Job successfully completed:', jobUpdate);
+           
+          }
         } catch (error) {
           console.error('Error parsing notification:', error);
         }

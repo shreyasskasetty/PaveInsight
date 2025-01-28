@@ -308,7 +308,7 @@ const ResultsPage: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="p-6 relative min-h-[500px]">
+                    <div className="p-6 relative min-h-[600px]">
                         {tabLoading ? (
                             <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 z-10">
                                 <div className="flex flex-col items-center">

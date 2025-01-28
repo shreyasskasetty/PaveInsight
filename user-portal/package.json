@@ -33,6 +33,7 @@
         "react-json-pretty": "^2.2.0",
         "react-modal": "^3.16.1",
         "react-toastify": "^10.0.6",
+        "recharts": "^2.15.1",
         "sockjs-client": "^1.6.1",
         "tailwind-merge": "^2.5.5",
         "tailwindcss-animate": "^1.0.7",

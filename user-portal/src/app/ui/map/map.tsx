@@ -11,13 +11,7 @@ import { on } from "events";
 import { userFormStore } from "@/store/form-store";
 import { submitForm } from "@/lib/api/request-api";
 import { getGeoJSON } from "@/lib/utils/map";
-
-//Map component props
-type MapComponentProps = {
-  selectedPlace: google.maps.places.PlaceResult | null;
-  drawingEnabled: boolean;
-  tool: google.maps.drawing.OverlayType | null;
-};
+import { useMapControlContext } from "./MapControlContext";
 
 //Default map container style
 export const defaultMapContainerStyle = {
@@ -39,7 +33,7 @@ const defaultMapOptions = {
     minZoom: 3,
 };
 
-const MapComponent: React.FC<MapComponentProps> = ({ selectedPlace, drawingEnabled, tool}) => {
+const MapComponent: React.FC = () => {
     //State variables
     const mapRef = useRef<google.maps.Map | null>(null);
     const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -51,8 +45,9 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedPlace, drawingEnabl
     const [drawnPath, setDrawnPath] = useState<Array<google.maps.LatLngLiteral> | null>(null);
     const [drawnArea, setDrawnArea] = useState<number | null>(null);
     const [drawnOverlay, setDrawnOverlay] = useState<google.maps.Polygon | google.maps.Circle | google.maps.Rectangle | google.maps.Marker | null>(null);
-
     const [polygonCoordinates, setPolygonCoordinates] = useState<Array<{ lat: number; lng: number }> | null>(null);
+
+    const {selectedPlace, drawingEnabled, tool } = useMapControlContext();
 
     const setModalIsOpen = userFormStore((state: any) => state.setOpen);
     const modalIsOpen = userFormStore((state: any) => state.open);
